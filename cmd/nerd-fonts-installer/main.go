@@ -10,10 +10,10 @@ import (
 	"os/signal"
 	"strings"
 
-	"github.com/w0rxbend/nerd-font-installer/internal/config"
-	"github.com/w0rxbend/nerd-font-installer/internal/fonts"
-	"github.com/w0rxbend/nerd-font-installer/internal/nerdfonts"
-	"github.com/w0rxbend/nerd-font-installer/internal/tui"
+	"github.com/worxbend/nerd-fonts-installer/internal/config"
+	"github.com/worxbend/nerd-fonts-installer/internal/fonts"
+	"github.com/worxbend/nerd-fonts-installer/internal/nerdfonts"
+	"github.com/worxbend/nerd-fonts-installer/internal/tui"
 )
 
 var (
@@ -25,14 +25,17 @@ var (
 	errNoConfig  = errors.New("no config found")
 )
 
+const (
+	commandName  = "nerd-fonts-installer"
+	configEnvVar = "NERD_FONTS_INSTALLER_CONFIG"
+)
+
 // configEnvVar names an environment variable holding a config path. It is
 // honored like --config (highest priority after the explicit flag), which suits
 // dotfiles, CI, and containers.
-const configEnvVar = "NERDFONT_CONFIG"
-
 // effectiveConfigPath resolves which config path to load and whether it is an
-// explicit selection: the --config flag wins, then $NERDFONT_CONFIG, otherwise
-// the caller falls back to discovery.
+// explicit selection: the --config flag wins, then configEnvVar, otherwise the
+// caller falls back to discovery.
 func effectiveConfigPath(configPath string, explicit bool) (string, bool) {
 	if explicit {
 		return configPath, true
@@ -91,12 +94,13 @@ func run(
 ) int {
 	deps = deps.withDefaults()
 
-	flags := flag.NewFlagSet("nerdfont-install", flag.ContinueOnError)
+	flags := flag.NewFlagSet(commandName, flag.ContinueOnError)
 	flags.SetOutput(stderr)
-	configPath := flags.String("config", "", "YAML config file; when omitted, discover config or start interactive mode")
+	configPath := flags.String("config", "", "config file; when omitted, discover an app-named config in CWD or the user config directory")
 	dryRun := flags.Bool("dry-run", false, "print planned downloads without installing fonts")
 	showFontNames := flags.Bool("font-names", false, "print YAML-ready Nerd Font family names and exit")
-	iconMode := flags.String("icons", string(tui.IconAuto), "TUI icon mode: auto, nerd, unicode, or ascii")
+	interactive := flags.Bool("interactive", false, "start the terminal picker when no config file is found")
+	iconMode := flags.String("icons", string(tui.IconAuto), "interactive icon mode: auto, nerd, unicode, or ascii")
 	showVersion := flags.Bool("version", false, "print version information and exit")
 	if err := flags.Parse(args); err != nil {
 		return 2
@@ -108,7 +112,7 @@ func run(
 	}
 
 	if *showVersion {
-		_, _ = fmt.Fprintf(stdout, "nerdfont-install %s (%s, %s)\n", version, commit, date)
+		_, _ = fmt.Fprintf(stdout, "%s %s (%s, %s)\n", commandName, version, commit, date)
 		return 0
 	}
 
@@ -131,6 +135,7 @@ func run(
 		ctx,
 		*configPath,
 		explicitConfig,
+		*interactive,
 		deps.isTerminal(stdin, stdout),
 		icons,
 		stderr,
@@ -231,6 +236,7 @@ func resolveConfig(
 	ctx context.Context,
 	configPath string,
 	explicitConfig bool,
+	interactive bool,
 	terminal bool,
 	icons tui.IconMode,
 	stderr io.Writer,
@@ -253,8 +259,11 @@ func resolveConfig(
 		return source.Config, nil
 	}
 
-	if !terminal {
+	if !interactive {
 		return config.Config{}, noConfigError()
+	}
+	if !terminal {
+		return config.Config{}, fmt.Errorf("%w; --interactive requires stdin and stdout terminals", errNoConfig)
 	}
 
 	_, _ = fmt.Fprintln(stderr, "No config found. Starting interactive mode...")

@@ -58,6 +58,31 @@ func TestLoadRejectsUnknownFields(t *testing.T) {
 	}
 }
 
+func TestLoadParsesJSONConfig(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "fonts.json")
+	data := []byte(`{"release":"v3.4.0","destination":"/tmp/fonts","refresh_font_cache":true,"families":["Hack"]}`)
+	if err := os.WriteFile(path, data, 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	cfg, err := Load(path)
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+	if cfg.Release != "v3.4.0" {
+		t.Fatalf("Release = %q, want v3.4.0", cfg.Release)
+	}
+	if cfg.Destination != "/tmp/fonts" {
+		t.Fatalf("Destination = %q, want /tmp/fonts", cfg.Destination)
+	}
+	if !cfg.RefreshFontCache {
+		t.Fatal("RefreshFontCache = false, want true")
+	}
+	if got := cfg.Families; len(got) != 1 || got[0] != "Hack" {
+		t.Fatalf("Families = %#v", got)
+	}
+}
+
 func TestLoadRejectsBlankAfterTrim(t *testing.T) {
 	tests := []struct {
 		name string
@@ -165,8 +190,16 @@ func TestDiscoverPathsReturnsInvalidConfigError(t *testing.T) {
 	}
 }
 
-func TestDefaultPathsUsesUserConfigDir(t *testing.T) {
-	configHome := filepath.Join(t.TempDir(), "xdg")
+func TestDefaultPathsSearchesCurrentDirectoryBeforeConfigHome(t *testing.T) {
+	temp := t.TempDir()
+	cwd := filepath.Join(temp, "cwd")
+	configHome := filepath.Join(temp, "xdg")
+	home := filepath.Join(temp, "home")
+	if err := os.Mkdir(cwd, 0o750); err != nil {
+		t.Fatal(err)
+	}
+	t.Chdir(cwd)
+	t.Setenv("HOME", home)
 	t.Setenv("XDG_CONFIG_HOME", configHome)
 
 	paths, err := DefaultPaths()
@@ -174,7 +207,96 @@ func TestDefaultPathsUsesUserConfigDir(t *testing.T) {
 		t.Fatalf("DefaultPaths() error = %v", err)
 	}
 
-	want := filepath.Join(configHome, "nerd-config-installer", "config.yaml")
+	wantPrefix := []string{
+		filepath.Join(cwd, "nerd-fonts-installer.yaml"),
+		filepath.Join(cwd, "nerd-fonts-installer.yml"),
+		filepath.Join(cwd, "nerd-fonts-installer.json"),
+		filepath.Join(cwd, "nerd-fonts-installer.conf"),
+		filepath.Join(cwd, "nerd-fonts-installer", "config.yaml"),
+		filepath.Join(cwd, "nerd-fonts-installer", "config.yml"),
+		filepath.Join(cwd, "nerd-fonts-installer", "config.json"),
+		filepath.Join(cwd, "nerd-fonts-installer", "config.conf"),
+		filepath.Join(configHome, "nerd-fonts-installer.yaml"),
+		filepath.Join(configHome, "nerd-fonts-installer.yml"),
+		filepath.Join(configHome, "nerd-fonts-installer.json"),
+		filepath.Join(configHome, "nerd-fonts-installer.conf"),
+		filepath.Join(configHome, "nerd-fonts-installer", "config.yaml"),
+		filepath.Join(configHome, "nerd-fonts-installer", "config.yml"),
+		filepath.Join(configHome, "nerd-fonts-installer", "config.json"),
+		filepath.Join(configHome, "nerd-fonts-installer", "config.conf"),
+	}
+	if len(paths) < len(wantPrefix) {
+		t.Fatalf("DefaultPaths() returned %d paths, want at least %d: %#v", len(paths), len(wantPrefix), paths)
+	}
+	for i, want := range wantPrefix {
+		if paths[i] != want {
+			t.Fatalf("DefaultPaths()[%d] = %q, want %q; paths = %#v", i, paths[i], want, paths)
+		}
+	}
+}
+
+func TestDefaultPathsFallsBackToHomeConfigWhenXDGUnset(t *testing.T) {
+	temp := t.TempDir()
+	cwd := filepath.Join(temp, "cwd")
+	home := filepath.Join(temp, "home")
+	if err := os.Mkdir(cwd, 0o750); err != nil {
+		t.Fatal(err)
+	}
+	t.Chdir(cwd)
+	t.Setenv("HOME", home)
+	t.Setenv("XDG_CONFIG_HOME", "")
+
+	paths, err := DefaultPaths()
+	if err != nil {
+		t.Fatalf("DefaultPaths() error = %v", err)
+	}
+
+	want := filepath.Join(home, ".config", "nerd-fonts-installer", "config.yaml")
+	for _, path := range paths {
+		if path == want {
+			return
+		}
+	}
+	t.Fatalf("DefaultPaths() = %#v, want path %q", paths, want)
+}
+
+func TestDefaultPathsIgnoresRelativeXDGConfigHome(t *testing.T) {
+	temp := t.TempDir()
+	cwd := filepath.Join(temp, "cwd")
+	home := filepath.Join(temp, "home")
+	if err := os.Mkdir(cwd, 0o750); err != nil {
+		t.Fatal(err)
+	}
+	t.Chdir(cwd)
+	t.Setenv("HOME", home)
+	t.Setenv("XDG_CONFIG_HOME", "relative")
+
+	paths, err := DefaultPaths()
+	if err != nil {
+		t.Fatalf("DefaultPaths() error = %v", err)
+	}
+
+	want := filepath.Join(home, ".config", "nerd-fonts-installer.yaml")
+	for _, path := range paths {
+		if path == want {
+			return
+		}
+	}
+	t.Fatalf("DefaultPaths() = %#v, want path %q", paths, want)
+}
+
+func TestDefaultPathsUsesXDGConfigHome(t *testing.T) {
+	cwd := t.TempDir()
+	configHome := filepath.Join(t.TempDir(), "xdg")
+	t.Chdir(cwd)
+	t.Setenv("XDG_CONFIG_HOME", configHome)
+
+	paths, err := DefaultPaths()
+	if err != nil {
+		t.Fatalf("DefaultPaths() error = %v", err)
+	}
+
+	want := filepath.Join(configHome, "nerd-fonts-installer", "config.yaml")
 	for _, path := range paths {
 		if path == want {
 			return

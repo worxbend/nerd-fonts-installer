@@ -7,7 +7,7 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 
-	"github.com/w0rxbend/nerd-font-installer/internal/nerdfonts"
+	"github.com/worxbend/nerd-fonts-installer/internal/nerdfonts"
 )
 
 func TestModelSelectsReleaseAndFamilies(t *testing.T) {

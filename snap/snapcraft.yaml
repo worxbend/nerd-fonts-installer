@@ -1,25 +1,25 @@
-name: nerdfont-install
-title: Nerd Font Installer
+name: nerd-fonts-installer
+title: Nerd Fonts Installer
 summary: Install Nerd Fonts from GitHub releases.
 description: |
-  nerdfont-install is a scriptable CLI for installing Nerd Fonts from a YAML
+  nerd-fonts-installer is a scriptable CLI for installing Nerd Fonts from a YAML
   config or an interactive terminal picker. It downloads release archives from
   GitHub, installs selected font families, and refreshes the font cache.
 
 license: MIT
-source-code: https://github.com/worxbend/nerd-font-installer
-issues: https://github.com/worxbend/nerd-font-installer/issues
+source-code: https://github.com/worxbend/nerd-fonts-installer
+issues: https://github.com/worxbend/nerd-fonts-installer/issues
 base: core24
 grade: stable
 confinement: classic
-adopt-info: nerdfont-install
+adopt-info: nerd-fonts-installer
 
 apps:
-  nerdfont-install:
-    command: bin/nerdfont-install
+  nerd-fonts-installer:
+    command: bin/nerd-fonts-installer
 
 parts:
-  nerdfont-install:
+  nerd-fonts-installer:
     plugin: go
     source: .
     build-snaps:
@@ -41,5 +41,5 @@ parts:
       CGO_ENABLED=0 go build \
         -trimpath \
         -ldflags "-s -w -X main.version=${version} -X main.commit=${commit} -X main.date=${date}" \
-        -o "${CRAFT_PART_INSTALL}/bin/nerdfont-install" \
-        ./cmd/nerdfont-install
+        -o "${CRAFT_PART_INSTALL}/bin/nerd-fonts-installer" \
+        ./cmd/nerd-fonts-installer
