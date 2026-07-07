@@ -1,4 +1,4 @@
-module github.com/w0rxbend/nerd-font-installer
+module github.com/worxbend/nerd-fonts-installer
 
 go 1.26
 

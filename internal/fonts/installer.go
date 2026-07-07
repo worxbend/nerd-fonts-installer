@@ -20,8 +20,8 @@ import (
 	"time"
 
 	"github.com/charmbracelet/lipgloss"
-	"github.com/w0rxbend/nerd-font-installer/internal/fontname"
-	"github.com/w0rxbend/nerd-font-installer/internal/nerdfonts"
+	"github.com/worxbend/nerd-fonts-installer/internal/fontname"
+	"github.com/worxbend/nerd-fonts-installer/internal/nerdfonts"
 	"golang.org/x/sync/errgroup"
 )
 

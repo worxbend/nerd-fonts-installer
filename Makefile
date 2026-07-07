@@ -46,7 +46,7 @@ cover:
 	$(GO) tool cover -func=coverage.out
 
 build:
-	$(GO) build -trimpath -o bin/nerdfont-install ./cmd/nerdfont-install
+	$(GO) build -trimpath -o bin/nerd-fonts-installer ./cmd/nerd-fonts-installer
 
 vuln:
 	GOTOOLCHAIN=$(GOVULNCHECK_TOOLCHAIN) $(GO) run golang.org/x/vuln/cmd/govulncheck@$(GOVULNCHECK_VERSION) $(PKGS)

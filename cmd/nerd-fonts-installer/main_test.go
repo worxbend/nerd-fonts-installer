@@ -8,10 +8,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/w0rxbend/nerd-font-installer/internal/config"
-	"github.com/w0rxbend/nerd-font-installer/internal/fonts"
-	"github.com/w0rxbend/nerd-font-installer/internal/nerdfonts"
-	"github.com/w0rxbend/nerd-font-installer/internal/tui"
+	"github.com/worxbend/nerd-fonts-installer/internal/config"
+	"github.com/worxbend/nerd-fonts-installer/internal/fonts"
+	"github.com/worxbend/nerd-fonts-installer/internal/nerdfonts"
+	"github.com/worxbend/nerd-fonts-installer/internal/tui"
 )
 
 func TestRunPrintsVersion(t *testing.T) {
@@ -22,7 +22,7 @@ func TestRunPrintsVersion(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("run() code = %d, want 0", code)
 	}
-	if !strings.Contains(stdout.String(), "nerdfont-install") {
+	if !strings.Contains(stdout.String(), "nerd-fonts-installer") {
 		t.Fatalf("stdout = %q, want version", stdout.String())
 	}
 	if stderr.Len() != 0 {
@@ -142,6 +142,29 @@ func TestRunErrorsWhenNoConfigAndNonInteractive(t *testing.T) {
 		},
 		isTerminal: func(stdin io.Reader, stdout io.Writer) bool {
 			return false
+		},
+	})
+	if code != 2 {
+		t.Fatalf("run() code = %d, want 2 (user-correctable: missing config)", code)
+	}
+	if !strings.Contains(stderr.String(), "no config found") {
+		t.Fatalf("stderr = %q, want no config error", stderr.String())
+	}
+}
+
+func TestRunErrorsWhenNoConfigEvenInTerminal(t *testing.T) {
+	var stderr bytes.Buffer
+
+	code := run(t.Context(), nil, strings.NewReader(""), &bytes.Buffer{}, &stderr, dependencies{
+		discoverConfig: func() (config.Source, bool, error) {
+			return config.Source{}, false, nil
+		},
+		isTerminal: func(stdin io.Reader, stdout io.Writer) bool {
+			return true
+		},
+		runTUI: func(context.Context, []nerdfonts.Release, tui.Options) (tui.Result, error) {
+			t.Fatal("runTUI must not run unless --interactive is set")
+			return tui.Result{}, nil
 		},
 	})
 	if code != 2 {
@@ -291,7 +314,7 @@ func TestRunInteractiveCancellationIsSuccess(t *testing.T) {
 	var stderr bytes.Buffer
 	var gotIcons tui.IconMode
 
-	code := run(t.Context(), []string{"--icons", "nerd"}, strings.NewReader(""), &bytes.Buffer{}, &stderr, dependencies{
+	code := run(t.Context(), []string{"--interactive", "--icons", "nerd"}, strings.NewReader(""), &bytes.Buffer{}, &stderr, dependencies{
 		discoverConfig: func() (config.Source, bool, error) {
 			return config.Source{}, false, nil
 		},

@@ -1,4 +1,4 @@
-# Project Memory — nerd-font-installer
+# Project Memory — nerd-fonts-installer
 
 > **Protocol for all agents (Claude, Codex, others):** Read this file at the
 > start of every session *before* touching code. After any change that alters
@@ -8,15 +8,16 @@
 
 ## What this is
 
-`nerdfont-install` is a small, scriptable Go CLI that installs
-[Nerd Fonts](https://github.com/ryanoasis/nerd-fonts) from a YAML config or an
-interactive TUI: it resolves a release, downloads per-family zip archives from
-GitHub, extracts the font files into the user's font directory, and refreshes
-the font cache. Audience: dotfiles / fresh-machine / dev-container setup.
+`nerd-fonts-installer` is a small, scriptable Go CLI that installs
+[Nerd Fonts](https://github.com/ryanoasis/nerd-fonts) from a config file or an
+explicit interactive TUI: it resolves a release, downloads per-family zip
+archives from GitHub, extracts the font files into the user's font directory,
+and refreshes the font cache. Audience: dotfiles / fresh-machine /
+dev-container setup.
 
 ## Architecture (package map)
 
-- `cmd/nerdfont-install` — entrypoint & orchestration.
+- `cmd/nerd-fonts-installer` — entrypoint & orchestration.
   - `run(ctx, args, stdin, stdout, stderr, deps) int` is the real, testable main;
     `main()` only wires os values into it.
   - Dependency injection via the `dependencies` struct of **function-typed
@@ -27,9 +28,12 @@ the font cache. Audience: dotfiles / fresh-machine / dev-container setup.
     user-correctable input (missing config, unknown/absent release), `1`
     runtime failure (network/fs/install).
   - `version/commit/date` are injected via `-ldflags -X main.*`.
-- `internal/config` — YAML loading. Strict decode (`KnownFields(true)`),
+- `internal/config` — YAML/JSON-compatible config loading. YAML and `.conf`
+  use strict `KnownFields(true)` decoding; JSON uses `DisallowUnknownFields`.
   `ApplyDefaults` → `Normalize` → `Validate`. `Discover`/`DefaultPaths` search
-  user + XDG (`os.UserConfigDir`) + binary-dir locations.
+  app-named files in CWD first, then `$XDG_CONFIG_HOME` when absolute, otherwise
+  `$HOME/.config`: `nerd-fonts-installer.{yaml,yml,json,conf}` and
+  `nerd-fonts-installer/config.{yaml,yml,json,conf}`.
 - `internal/nerdfonts` — GitHub releases API client. Zero-value-with-defaults
   `Client` (configurable `HTTPClient`/`BaseURL`/`MaxPages`). Owns `Latest`
   const and typed errors `ErrNoReleases`, `ReleaseNotFoundError`. Pagination
@@ -62,8 +66,9 @@ the font cache. Audience: dotfiles / fresh-machine / dev-container setup.
    `Close`) — a swallowed close can promote a truncated font.
 5. **Testability:** `run` takes explicit I/O; HTTP goes through an injectable
    `*http.Client` (tests use `roundTripFunc` + in-memory zips, or `httptest`).
-6. **Security defaults:** strict YAML, `url.PathEscape` on URL segments,
-   `exec.CommandContext` (no shell) for `fc-cache`, size caps on all copies.
+6. **Security defaults:** strict config decoding, `url.PathEscape` on URL
+   segments, `exec.CommandContext` (no shell) for `fc-cache`, size caps on all
+   copies.
 7. **Download integrity:** each zip is verified against the release's
    `SHA-256.txt` manifest (`fetchChecksums` → per-family digest). Verification
    is *best-effort*: a missing manifest warns and proceeds; a digest **mismatch
@@ -71,7 +76,7 @@ the font cache. Audience: dotfiles / fresh-machine / dev-container setup.
 
 ## Dev / build workflow
 
-- Go **1.26**. Module: `github.com/w0rxbend/nerd-font-installer`.
+- Go **1.26**. Module: `github.com/worxbend/nerd-fonts-installer`.
 - `make verify` ≈ `go vet ./...` + `golangci-lint run` (v2.12.2) + `go test ./...`.
   `golangci-lint` is a required check for every code change; `make lint` is the
   focused lint target. **Tests must pass under `-race`** (the install path is
@@ -93,7 +98,3 @@ the font cache. Audience: dotfiles / fresh-machine / dev-container setup.
 
 - **Release tooling duplication:** `.goreleaser.yaml` and the hand-rolled bash
   in `.github/workflows/release.yml` are two sources of truth — pick one.
-- **Config filename stems** are inconsistent (`.nerd-config.yaml`,
-  `nerd-config-installer/`, `config.yaml`, binary name `nerdfont-install`).
-  Standardize additively (keep old paths as fallbacks) to avoid relocating
-  existing users' files.

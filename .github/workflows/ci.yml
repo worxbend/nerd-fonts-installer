@@ -44,7 +44,7 @@ jobs:
         run: go vet ./...
 
       - name: Build CLI
-        run: go build -trimpath -o /tmp/nerdfont-install ./cmd/nerdfont-install
+        run: go build -trimpath -o /tmp/nerd-fonts-installer ./cmd/nerd-fonts-installer
 
       - name: Lint GitHub workflows
         run: go run github.com/rhysd/actionlint/cmd/actionlint@v1.7.12

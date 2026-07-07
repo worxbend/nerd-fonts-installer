@@ -74,7 +74,7 @@ func (c Client) Releases(ctx context.Context) ([]Release, error) {
 			return nil, fmt.Errorf("create releases request: %w", err)
 		}
 		req.Header.Set("Accept", "application/vnd.github+json")
-		req.Header.Set("User-Agent", "nerdfont-install")
+		req.Header.Set("User-Agent", "nerd-fonts-installer")
 
 		resp, err := client.Do(req) //nolint:bodyclose // decodeReleases owns and closes the response body.
 		if err != nil {

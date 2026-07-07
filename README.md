@@ -1,24 +1,25 @@
 <div align="center">
 
-<img src="assets/logo.svg" alt="Nerd Font Installer logo" width="140" height="140" />
+<img src="assets/logo.svg" alt="Nerd Fonts Installer logo" width="140" height="140" />
 
-# Nerd Font Installer
+# Nerd Fonts Installer
 
-**Install your favorite [Nerd Fonts](https://github.com/ryanoasis/nerd-fonts) with one small command.**
+**A Nerd Fonts installer for repeatable terminal and editor setup.**
 
 <p>
-  <a href="https://github.com/w0rxbend/nerd-font-installer/releases"><img alt="Release" src="https://img.shields.io/github/v/release/w0rxbend/nerd-font-installer?sort=semver&color=7C3AED&label=release"></a>
+  <a href="https://github.com/worxbend/nerd-fonts-installer/releases"><img alt="Release" src="https://img.shields.io/github/v/release/worxbend/nerd-fonts-installer?sort=semver&color=7C3AED&label=release"></a>
   <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/license-MIT-2563EB"></a>
   <img alt="Go" src="https://img.shields.io/badge/Go-1.26+-00ADD8?logo=go&logoColor=white">
   <img alt="Platform" src="https://img.shields.io/badge/platform-Linux%20%7C%20macOS-555">
-  <a href="https://snapcraft.io/nerdfont-install"><img alt="Snap" src="https://img.shields.io/badge/snap-nerdfont--install-82BEA0?logo=snapcraft&logoColor=white"></a>
+  <a href="https://snapcraft.io/nerd-fonts-installer"><img alt="Snap" src="https://img.shields.io/badge/snap-nerd--fonts--installer-82BEA0?logo=snapcraft&logoColor=white"></a>
 </p>
 
 </div>
 
-`nerdfont-install` is for people who set up terminals, editors, dotfiles, new
-laptops, remote dev boxes, or fresh Linux/macOS machines and do not want to
-manually download font archives every time.
+`nerd-fonts-installer` is a Nerd Fonts installer for people who set up
+terminals, editors, dotfiles, new laptops, remote dev boxes, or fresh
+Linux/macOS machines and do not want to manually download font archives every
+time.
 
 Instead of clicking through GitHub releases, unzipping files, moving fonts into
 the right folder, and refreshing the font cache by hand, you keep a short YAML
@@ -38,7 +39,7 @@ families:
 Then run:
 
 ```bash
-nerdfont-install
+nerd-fonts-installer
 ```
 
 That is it.
@@ -69,11 +70,11 @@ Manual install:
 7. Refresh the font cache.
 8. Repeat for every font.
 
-With `nerdfont-install`:
+With `nerd-fonts-installer`:
 
 ```bash
-nerdfont-install --dry-run
-nerdfont-install
+nerd-fonts-installer --dry-run
+nerd-fonts-installer
 ```
 
 ## What It Does
@@ -82,9 +83,9 @@ nerdfont-install
 - Installs only font files: `.ttf`, `.otf`, and `.ttc`.
 - Keeps each font family in its own folder.
 - Supports `latest` or pinned releases like `v3.4.0`.
-- Reads a simple YAML config.
+- Reads a simple YAML, JSON, or `.conf` config.
 - Can discover your config automatically.
-- Has an interactive picker when you do not have a config yet.
+- Has an interactive picker with `--interactive`.
 - Prints copy-paste-ready font family names for configs.
 - Supports dry-runs.
 - Refreshes `fc-cache` on Linux when requested.
@@ -102,38 +103,38 @@ Pick one:
 
 | System | URL |
 | --- | --- |
-| Linux Intel/AMD | `https://github.com/w0rxbend/nerd-font-installer/releases/download/latest/nerdfont-install_latest_linux_amd64.tar.gz` |
-| Linux ARM64 | `https://github.com/w0rxbend/nerd-font-installer/releases/download/latest/nerdfont-install_latest_linux_arm64.tar.gz` |
-| macOS Intel | `https://github.com/w0rxbend/nerd-font-installer/releases/download/latest/nerdfont-install_latest_darwin_amd64.tar.gz` |
-| macOS Apple Silicon | `https://github.com/w0rxbend/nerd-font-installer/releases/download/latest/nerdfont-install_latest_darwin_arm64.tar.gz` |
+| Linux Intel/AMD | `https://github.com/worxbend/nerd-fonts-installer/releases/download/latest/nerd-fonts-installer_latest_linux_amd64.tar.gz` |
+| Linux ARM64 | `https://github.com/worxbend/nerd-fonts-installer/releases/download/latest/nerd-fonts-installer_latest_linux_arm64.tar.gz` |
+| macOS Intel | `https://github.com/worxbend/nerd-fonts-installer/releases/download/latest/nerd-fonts-installer_latest_darwin_amd64.tar.gz` |
+| macOS Apple Silicon | `https://github.com/worxbend/nerd-fonts-installer/releases/download/latest/nerd-fonts-installer_latest_darwin_arm64.tar.gz` |
 
 For example:
 
 ```bash
-curl -LO https://github.com/w0rxbend/nerd-font-installer/releases/download/latest/nerdfont-install_latest_linux_amd64.tar.gz
-curl -LO https://github.com/w0rxbend/nerd-font-installer/releases/download/latest/checksums.txt
+curl -LO https://github.com/worxbend/nerd-fonts-installer/releases/download/latest/nerd-fonts-installer_latest_linux_amd64.tar.gz
+curl -LO https://github.com/worxbend/nerd-fonts-installer/releases/download/latest/checksums.txt
 sha256sum --check --ignore-missing checksums.txt
 ```
 
 Extract it:
 
 ```bash
-tar -xzf nerdfont-install_latest_linux_amd64.tar.gz
-cd nerdfont-install_latest_linux_amd64
+tar -xzf nerd-fonts-installer_latest_linux_amd64.tar.gz
+cd nerd-fonts-installer_latest_linux_amd64
 ```
 
 Move it somewhere on your `PATH`:
 
 ```bash
-chmod +x nerdfont-install
+chmod +x nerd-fonts-installer
 mkdir -p ~/.local/bin
-mv nerdfont-install ~/.local/bin/
+mv nerd-fonts-installer ~/.local/bin/
 ```
 
 Check it works:
 
 ```bash
-nerdfont-install --version
+nerd-fonts-installer --version
 ```
 
 If `~/.local/bin` is not on your `PATH`, add this to your shell config:
@@ -147,7 +148,7 @@ export PATH="$HOME/.local/bin:$PATH"
 On Linux, after the Snap Store package is published, you can install it with:
 
 ```bash
-sudo snap install nerdfont-install --classic
+sudo snap install nerd-fonts-installer --classic
 ```
 
 The snap uses classic confinement because the CLI installs fonts into the real
@@ -159,13 +160,13 @@ Store approval before the package can be released publicly.
 Create the config directory:
 
 ```bash
-mkdir -p ~/.config/nerd-config-installer
+mkdir -p ~/.config/nerd-fonts-installer
 ```
 
 Create the config file:
 
 ```bash
-nano ~/.config/nerd-config-installer/config.yaml
+nano ~/.config/nerd-fonts-installer/config.yaml
 ```
 
 Paste this:
@@ -187,7 +188,7 @@ Save the file.
 Before installing, run a dry-run:
 
 ```bash
-nerdfont-install --dry-run
+nerd-fonts-installer --dry-run
 ```
 
 This prints what would be downloaded and where it would go. It does not write
@@ -198,7 +199,7 @@ font files.
 Run:
 
 ```bash
-nerdfont-install
+nerd-fonts-installer
 ```
 
 Now select the installed Nerd Font in your terminal or editor settings.
@@ -208,10 +209,11 @@ Now select the installed Nerd Font in your terminal or editor settings.
 If you do not want to write YAML yet, just run:
 
 ```bash
-nerdfont-install
+nerd-fonts-installer --interactive
 ```
 
-When no config file is found, the app opens an interactive picker:
+When no config file is found and `--interactive` is set, the app opens an
+interactive picker:
 
 1. Pick a Nerd Fonts release.
 2. Pick one or more font families.
@@ -235,7 +237,7 @@ Controls:
 Not sure what the exact family names are? Ask the tool:
 
 ```bash
-nerdfont-install --font-names
+nerd-fonts-installer --font-names
 ```
 
 It prints YAML you can paste directly into your config:
@@ -253,7 +255,7 @@ families:
 For a pinned release, put the release in your config and run:
 
 ```bash
-nerdfont-install --config ~/.config/nerd-config-installer/config.yaml --font-names
+nerd-fonts-installer --config ~/.config/nerd-fonts-installer/config.yaml --font-names
 ```
 
 ## Common Recipes
@@ -271,8 +273,8 @@ families:
 Run:
 
 ```bash
-nerdfont-install --config fonts.yaml --dry-run
-nerdfont-install --config fonts.yaml
+nerd-fonts-installer --config fonts.yaml --dry-run
+nerd-fonts-installer --config fonts.yaml
 ```
 
 ### Install a Good Terminal Font Set
@@ -318,7 +320,7 @@ families:
 Run:
 
 ```bash
-nerdfont-install --config fonts.yaml
+nerd-fonts-installer --config fonts.yaml
 ```
 
 Files will appear under:
@@ -333,9 +335,9 @@ Files will appear under:
 #!/usr/bin/env bash
 set -euo pipefail
 
-mkdir -p ~/.config/nerd-config-installer
+mkdir -p ~/.config/nerd-fonts-installer
 
-cat > ~/.config/nerd-config-installer/config.yaml <<'YAML'
+cat > ~/.config/nerd-fonts-installer/config.yaml <<'YAML'
 release: latest
 destination: ~/.local/share/fonts/NerdFonts
 refresh_font_cache: true
@@ -345,8 +347,8 @@ families:
   - FiraCode
 YAML
 
-nerdfont-install --dry-run
-nerdfont-install
+nerd-fonts-installer --dry-run
+nerd-fonts-installer
 ```
 
 This is useful in dotfiles, Ansible roles, install scripts, or fresh-machine
@@ -377,48 +379,57 @@ doubt.
 
 ## Where Config Files Are Found
 
-When `--config` is not provided, the tool checks the `NERDFONT_CONFIG`
+When `--config` is not provided, the tool checks the `NERD_FONTS_INSTALLER_CONFIG`
 environment variable, then the following locations in order:
 
-1. `~/.nerd-config.yaml`
-2. `~/.config/nerd-config-installer/config.yaml`
-3. `config.yaml` next to the binary
-4. `nerd-config.yaml` next to the binary
+1. `./nerd-fonts-installer.yaml`
+2. `./nerd-fonts-installer.yml`
+3. `./nerd-fonts-installer.json`
+4. `./nerd-fonts-installer.conf`
+5. `./nerd-fonts-installer/config.yaml`
+6. `./nerd-fonts-installer/config.yml`
+7. `./nerd-fonts-installer/config.json`
+8. `./nerd-fonts-installer/config.conf`
+9. The same app-named files under `$XDG_CONFIG_HOME`, when it is set to an
+   absolute path.
+10. The same app-named files under `~/.config` when `$XDG_CONFIG_HOME` is
+    unset, empty, or relative.
 
-Set `NERDFONT_CONFIG=/path/to/fonts.yaml` to point at a config without passing
-`--config` every time — handy in dotfiles, CI, and containers. It is honored by
-`--font-names` as well.
+Set `NERD_FONTS_INSTALLER_CONFIG=/path/to/fonts.yaml` to point at a config
+without passing `--config` every time — handy in dotfiles, CI, and containers.
+It is honored by `--font-names` as well.
 
 The recommended location is:
 
 ```text
-~/.config/nerd-config-installer/config.yaml
+~/.config/nerd-fonts-installer/config.yaml
 ```
 
 ## Command Reference
 
 ```text
-nerdfont-install [flags]
+nerd-fonts-installer [flags]
 ```
 
 | Flag | What it does |
 | --- | --- |
-| `--config <path>` | Use a specific YAML config file. |
+| `--config <path>` | Use a specific config file. |
 | `--dry-run` | Show what would happen without installing. |
 | `--font-names` | Print YAML-ready font family names and exit. |
+| `--interactive` | Open the terminal picker when no config is found. |
 | `--icons <mode>` | Set interactive TUI icons: `auto`, `nerd`, `unicode`, or `ascii`. Defaults to `auto`, which avoids requiring Nerd Font glyphs. |
 | `--version` | Print version info and exit. |
 
 Examples:
 
 ```bash
-nerdfont-install --dry-run
-nerdfont-install --config fonts.yaml
-nerdfont-install --config fonts.yaml --dry-run
-nerdfont-install --font-names
-nerdfont-install --icons nerd
-nerdfont-install --icons ascii
-nerdfont-install --version
+nerd-fonts-installer --dry-run
+nerd-fonts-installer --config fonts.yaml
+nerd-fonts-installer --config fonts.yaml --dry-run
+nerd-fonts-installer --font-names
+nerd-fonts-installer --interactive --icons nerd
+nerd-fonts-installer --interactive --icons ascii
+nerd-fonts-installer --version
 ```
 
 ## Install Layout
@@ -456,18 +467,21 @@ You have two choices:
 1. Create a config:
 
    ```bash
-   mkdir -p ~/.config/nerd-config-installer
-   nano ~/.config/nerd-config-installer/config.yaml
+   mkdir -p ~/.config/nerd-fonts-installer
+   nano ~/.config/nerd-fonts-installer/config.yaml
    ```
 
 2. Or pass a config explicitly:
 
    ```bash
-   nerdfont-install --config /path/to/fonts.yaml
+   nerd-fonts-installer --config /path/to/fonts.yaml
    ```
 
-If you are in a real terminal and no config exists, interactive mode should
-start automatically.
+If you want to use the terminal picker instead, run:
+
+```bash
+nerd-fonts-installer --interactive
+```
 
 ### `duplicate font family "JetBrainsMono"`
 
@@ -487,7 +501,7 @@ Usually this means the family name or release tag is wrong.
 Run:
 
 ```bash
-nerdfont-install --font-names
+nerd-fonts-installer --font-names
 ```
 
 Then copy the exact family name from the output.
@@ -541,14 +555,14 @@ Requirements:
 Build:
 
 ```bash
-go build -trimpath -o bin/nerdfont-install ./cmd/nerdfont-install
+go build -trimpath -o bin/nerd-fonts-installer ./cmd/nerd-fonts-installer
 ```
 
 Smoke test:
 
 ```bash
-./bin/nerdfont-install --version
-./bin/nerdfont-install --config config.example.yaml --dry-run
+./bin/nerd-fonts-installer --version
+./bin/nerd-fonts-installer --config config.example.yaml --dry-run
 ```
 
 ## Development
@@ -589,7 +603,7 @@ The release workflow publishes versioned GitHub releases for `v*` tags and also
 refreshes a moving `latest` release. Use the fixed download form:
 
 ```text
-https://github.com/w0rxbend/nerd-font-installer/releases/download/latest/<asset>
+https://github.com/worxbend/nerd-fonts-installer/releases/download/latest/<asset>
 ```
 
 The Snap workflow builds snaps on pull requests, `main`, tags, and manual runs.
@@ -599,11 +613,11 @@ It publishes only on non-PR runs:
 - `v*` tags publish to `stable`
 - manual runs publish to the selected channel
 
-Before publishing snaps, register the `nerdfont-install` snap name and add a
+Before publishing snaps, register the `nerd-fonts-installer` snap name and add a
 repository secret named `SNAPCRAFT_STORE_CREDENTIALS`. Generate it with:
 
 ```bash
-snapcraft export-login --snaps=nerdfont-install \
+snapcraft export-login --snaps=nerd-fonts-installer \
   --acls package_access,package_push,package_update,package_release \
   snapcraft-login.txt
 ```
@@ -616,8 +630,8 @@ MIT. See [LICENSE](LICENSE).
 
 The project is intentionally small:
 
-- `cmd/nerdfont-install` owns flags, command flow, and exit codes.
-- `internal/config` owns YAML loading, defaults, validation, and discovery.
+- `cmd/nerd-fonts-installer` owns flags, command flow, and exit codes.
+- `internal/config` owns config loading, defaults, validation, and discovery.
 - `internal/fonts` owns downloads, extraction, atomic replacement, and cache refresh.
 - `internal/nerdfonts` owns GitHub release discovery.
 - `internal/tui` owns the Charm Bubble Tea interactive UI.

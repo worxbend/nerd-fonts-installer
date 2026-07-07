@@ -43,7 +43,7 @@ func TestClientReleasesFetchesAndFiltersPages(t *testing.T) {
 		if got := r.Header.Get("Accept"); got != "application/vnd.github+json" {
 			t.Fatalf("Accept = %q", got)
 		}
-		if got := r.Header.Get("User-Agent"); got != "nerdfont-install" {
+		if got := r.Header.Get("User-Agent"); got != "nerd-fonts-installer" {
 			t.Fatalf("User-Agent = %q", got)
 		}
 
