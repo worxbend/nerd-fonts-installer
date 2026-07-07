@@ -193,16 +193,16 @@ jobs:
 
           for platform in "${platforms[@]}"; do
             read -r goos goarch <<< "${platform}"
-            archive="nerdfont-install_${version}_${goos}_${goarch}"
-            latest_archive="nerdfont-install_latest_${goos}_${goarch}"
+            archive="nerd-fonts-installer_${version}_${goos}_${goarch}"
+            latest_archive="nerd-fonts-installer_latest_${goos}_${goarch}"
             staging="dist/${archive}"
 
             mkdir -p "${staging}"
             CGO_ENABLED=0 GOOS="${goos}" GOARCH="${goarch}" go build \
               -trimpath \
               -ldflags "-s -w -X main.version=${version} -X main.commit=${commit} -X main.date=${date}" \
-              -o "${staging}/nerdfont-install" \
-              ./cmd/nerdfont-install
+              -o "${staging}/nerd-fonts-installer" \
+              ./cmd/nerd-fonts-installer
 
             cp LICENSE README.md config.example.yaml "${staging}/"
             tar -C dist -czf "dist/${archive}.tar.gz" "${archive}"

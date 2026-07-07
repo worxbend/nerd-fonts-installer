@@ -13,8 +13,8 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/w0rxbend/nerd-font-installer/internal/config"
-	"github.com/w0rxbend/nerd-font-installer/internal/nerdfonts"
+	"github.com/worxbend/nerd-fonts-installer/internal/config"
+	"github.com/worxbend/nerd-fonts-installer/internal/nerdfonts"
 )
 
 type Result struct {
@@ -350,7 +350,7 @@ func (m loadingModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m loadingModel) View() string {
-	brand := gradientText("✦ nerdfont-install", brandRamp)
+	brand := gradientText("✦ nerd-fonts-installer", brandRamp)
 	return fmt.Sprintf("\n  %s\n  %s %s\n", brand, spinnerStyle.Render(m.spinner.View()), accentStyle.Render(m.message))
 }
 
@@ -763,7 +763,7 @@ func (m model) banner(stepLabel, detail string) string {
 	boxWidth := m.bodyWidth() - 6
 	textWidth := boxWidth - 4 // account for the banner's horizontal padding
 
-	wordmark := gradientText(m.logo()+"  nerdfont-install", brandRamp)
+	wordmark := gradientText(m.logo()+"  nerd-fonts-installer", brandRamp)
 	header := wordmark
 	if m.wideLayout() {
 		header = spread(textWidth, wordmark, m.breadcrumb())

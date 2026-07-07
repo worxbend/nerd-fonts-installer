@@ -48,4 +48,4 @@ implement it as small, individually-green commits.
 | Vet | `go vet ./...` |
 | Lint | `golangci-lint run` |
 | Everything | `make verify` |
-| Run | `go run ./cmd/nerdfont-install --help` |
+| Run | `go run ./cmd/nerd-fonts-installer --help` |
