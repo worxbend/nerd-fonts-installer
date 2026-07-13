@@ -619,8 +619,12 @@ repository secret named `SNAPCRAFT_STORE_CREDENTIALS`. Generate it with:
 ```bash
 snapcraft export-login --snaps=nerd-fonts-installer \
   --acls package_access,package_push,package_update,package_release \
-  snapcraft-login.txt
+  /tmp/snapcraft-login.txt
 ```
+
+Paste the contents of the generated file into the `SNAPCRAFT_STORE_CREDENTIALS`
+secret, then delete the local file. Never write it inside the repository —
+it is a live credential and must not be committed.
 
 ## License
 
