@@ -1,0 +1,60 @@
+name: Pages
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "docs/**"
+      - "assets/**"
+      - ".github/workflows/pages.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Build and deploy microsite
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      # The site source lives in docs/ but references shared repository assets
+      # (logo, screenshots) so there is only one copy of each. Assemble both into
+      # the published tree instead of duplicating files in the repository.
+      - name: Assemble site
+        run: |
+          mkdir -p _site/assets
+          cp -R docs/. _site/
+          cp -R assets/. _site/assets/
+          test -f _site/index.html
+          test -f _site/assets/logo.svg
+          test -f _site/assets/screenshots/tui-releases.svg
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: _site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

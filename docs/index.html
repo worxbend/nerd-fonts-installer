@@ -1,0 +1,414 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>nerd-fonts-installer — Nerd Fonts, installed the boring way</title>
+<meta name="description" content="A small, scriptable Go CLI that installs Nerd Fonts from a config file or an interactive terminal picker. Repeatable font setup for dotfiles, fresh machines, and dev containers.">
+<link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="styles.css">
+<link rel="canonical" href="https://worxbend.github.io/nerd-fonts-installer/">
+
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://worxbend.github.io/nerd-fonts-installer/">
+<meta property="og:title" content="nerd-fonts-installer">
+<meta property="og:description" content="Nerd Fonts, installed the boring way. One config file, one command, every machine.">
+<meta property="og:image" content="https://worxbend.github.io/nerd-fonts-installer/assets/social-card.png">
+<meta name="twitter:card" content="summary_large_image">
+
+<script>
+  // Applied before first paint so neither the theme nor the scroll reveals flash.
+  (function () {
+    var root = document.documentElement;
+    try {
+      var saved = localStorage.getItem("nfi-theme");
+      root.dataset.theme =
+        saved || (matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
+    } catch (e) {
+      root.dataset.theme = "dark";
+    }
+    // Sections stay visible unless the observer that reveals them can actually
+    // run, so a JS failure never leaves the page blank.
+    if ("IntersectionObserver" in window &&
+        !matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      root.classList.add("js-reveal");
+    }
+  })();
+</script>
+</head>
+<body>
+
+<div class="aurora" aria-hidden="true"><span></span><span></span><span></span></div>
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="#top">
+      <img src="assets/logo.svg" alt="" width="30" height="30">
+      <span>nerd-fonts-installer</span>
+    </a>
+    <nav class="site-nav">
+      <a href="#showcase">Screenshots</a>
+      <a href="#features">Features</a>
+      <a href="#quickstart">Quick start</a>
+      <a href="#config">Config</a>
+      <a href="#faq">FAQ</a>
+    </nav>
+    <div class="header-actions">
+      <button class="icon-btn theme-toggle" id="theme-toggle" type="button" aria-label="Toggle color theme">
+        <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+        <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+      </button>
+      <a class="icon-btn" href="https://github.com/worxbend/nerd-fonts-installer" aria-label="View on GitHub">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.4 7.4 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+      </a>
+    </div>
+  </div>
+</header>
+
+<main id="top">
+
+  <!-- ================= HERO ================= -->
+  <section class="hero">
+    <div class="wrap">
+      <img class="hero-logo" src="assets/logo.svg" alt="nerd-fonts-installer logo" width="96" height="96">
+      <h1>Nerd Fonts,<br><span class="gradient-text">installed the boring way.</span></h1>
+      <p class="tagline">
+        A small, scriptable Go CLI that turns "download the zip, unzip it, move the files,
+        refresh the cache, repeat" into one config file and one command.
+      </p>
+
+      <p class="badges">
+        <a href="https://github.com/worxbend/nerd-fonts-installer/releases"><img alt="Latest release" src="https://img.shields.io/github/v/release/worxbend/nerd-fonts-installer?sort=semver&amp;color=C75CFF&amp;label=release&amp;style=flat-square"></a>
+        <a href="https://github.com/worxbend/nerd-fonts-installer/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/worxbend/nerd-fonts-installer/ci.yml?branch=main&amp;label=CI&amp;style=flat-square&amp;color=5BF0B8"></a>
+        <a href="https://snapcraft.io/nerd-fonts-installer"><img alt="Snap Store" src="https://img.shields.io/badge/snap-install-FF5FAF?logo=snapcraft&amp;logoColor=white&amp;style=flat-square"></a>
+        <a href="https://github.com/worxbend/nerd-fonts-installer/blob/main/LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/license-MIT-5BA8FF?style=flat-square"></a>
+        <img alt="Go 1.26+" src="https://img.shields.io/badge/Go-1.26+-46E5E0?logo=go&amp;logoColor=white&amp;style=flat-square">
+      </p>
+
+      <div class="copy-box">
+        <code data-copy="sudo snap install nerd-fonts-installer --classic"><span class="prompt">$</span> sudo snap install nerd-fonts-installer --classic</code>
+        <button class="copy-btn" type="button" aria-label="Copy install command">
+          <svg class="clip" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          <svg class="check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+        </button>
+      </div>
+
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="#quickstart">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          Get started
+        </a>
+        <a class="btn" href="https://github.com/worxbend/nerd-fonts-installer">
+          <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.4 7.4 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+          Star on GitHub
+        </a>
+        <a class="btn" href="https://github.com/worxbend/nerd-fonts-installer/wiki">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+          Read the wiki
+        </a>
+      </div>
+
+      <p style="margin-top:22px">
+        <span class="pill"><span class="dot"></span> Linux &amp; macOS &middot; single static binary &middot; no runtime deps</span>
+      </p>
+    </div>
+  </section>
+
+  <!-- ================= SHOWCASE ================= -->
+  <section id="showcase" class="showcase">
+    <div class="wrap">
+      <div class="tabs" role="tablist" aria-label="Screenshots">
+        <button class="tab" role="tab" id="tab-releases" aria-controls="panel-releases" aria-selected="true" type="button">Pick a release</button>
+        <button class="tab" role="tab" id="tab-families" aria-controls="panel-families" aria-selected="false" type="button">Pick your fonts</button>
+        <button class="tab" role="tab" id="tab-install" aria-controls="panel-install" aria-selected="false" type="button">Install</button>
+        <button class="tab" role="tab" id="tab-dryrun" aria-controls="panel-dryrun" aria-selected="false" type="button">Dry run</button>
+        <button class="tab" role="tab" id="tab-names" aria-controls="panel-names" aria-selected="false" type="button">Font names</button>
+      </div>
+
+      <div class="shot" role="tabpanel" id="panel-releases" aria-labelledby="tab-releases">
+        <img src="assets/screenshots/tui-releases.svg" alt="Terminal showing the interactive release picker with a list of Nerd Fonts releases and a release detail panel">
+      </div>
+      <div class="shot" role="tabpanel" id="panel-families" aria-labelledby="tab-families" hidden>
+        <img src="assets/screenshots/tui-families.svg" alt="Terminal showing the font family picker with checkboxes, a live install plan and a selection progress bar">
+      </div>
+      <div class="shot" role="tabpanel" id="panel-install" aria-labelledby="tab-install" hidden>
+        <img src="assets/screenshots/cli-install.svg" alt="Terminal showing three font families installing concurrently and the font cache being refreshed">
+      </div>
+      <div class="shot" role="tabpanel" id="panel-dryrun" aria-labelledby="tab-dryrun" hidden>
+        <img src="assets/screenshots/cli-dry-run.svg" alt="Terminal showing a dry run listing exactly what would be downloaded and where it would be installed">
+      </div>
+      <div class="shot" role="tabpanel" id="panel-names" aria-labelledby="tab-names" hidden>
+        <img src="assets/screenshots/cli-font-names.svg" alt="Terminal printing YAML-ready Nerd Font family names">
+      </div>
+
+      <p class="shot-caption" id="shot-caption">Real captures — every screenshot is generated from an actual run of the tool.</p>
+    </div>
+  </section>
+
+  <!-- ================= FEATURES ================= -->
+  <section id="features">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="eyebrow gradient-text">What you get</span>
+        <h2>Font setup that survives a reinstall</h2>
+        <p>Built for people who rebuild machines, maintain dotfiles, and want the same glyphs everywhere.</p>
+      </div>
+
+      <div class="grid">
+        <div class="card reveal">
+          <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="#c75cff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg></div>
+          <h3>Declarative config</h3>
+          <p>One YAML, JSON, or <code>.conf</code> file lists the release and the families. Commit it with your dotfiles and every machine gets the same fonts.</p>
+        </div>
+        <div class="card reveal">
+          <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="#46e5e0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4M6 8l3 2-3 2M12 12h4"/></svg></div>
+          <h3>Interactive picker</h3>
+          <p>No config yet? <code>--interactive</code> opens a Bubble Tea TUI: choose a release, filter and tick families, hit enter.</p>
+        </div>
+        <div class="card reveal">
+          <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="#5bf0b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg></div>
+          <h3>Checksum verified</h3>
+          <p>Every archive is checked against the release's <code>SHA-256.txt</code> manifest. A digest mismatch aborts the install rather than shipping a corrupt font.</p>
+        </div>
+        <div class="card reveal">
+          <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="#ff5faf" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h8l-1 8 10-12h-8l1-8z"/></svg></div>
+          <h3>Concurrent installs</h3>
+          <p>Families download and extract in parallel with clean, non-interleaved progress output. Ten fonts take about as long as the slowest one.</p>
+        </div>
+        <div class="card reveal">
+          <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="#5ba8ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 2"/></svg></div>
+          <h3>Atomic &amp; reversible</h3>
+          <p>Each family is staged in a temp directory and renamed into place, keeping a <code>.old</code> backup. A failed download never leaves half a font behind.</p>
+        </div>
+        <div class="card reveal">
+          <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="#ffc857" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h4l3 8 4-16 3 8h6"/></svg></div>
+          <h3>Preview before you write</h3>
+          <p><code>--dry-run</code> prints every URL and destination path without touching disk. <code>--font-names</code> prints paste-ready family names.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= QUICK START ================= -->
+  <section id="quickstart">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="eyebrow gradient-text">Quick start</span>
+        <h2>Three steps to patched glyphs</h2>
+        <p>From nothing installed to a working Nerd Font in your terminal.</p>
+      </div>
+
+      <div class="steps">
+        <div class="step reveal">
+          <div class="num">1</div>
+          <h3>Install the binary</h3>
+          <p>Snap on Linux, or grab a tarball for your platform — see <a href="#install" style="color:var(--blue)">Install</a>.</p>
+<pre class="code"><span class="p">$</span> sudo snap install \
+    nerd-fonts-installer \
+    <span class="k">--classic</span>
+
+<span class="p">$</span> nerd-fonts-installer \
+    <span class="k">--version</span></pre>
+        </div>
+
+        <div class="step reveal">
+          <div class="num">2</div>
+          <h3>Write a config</h3>
+          <p>Drop this at <code>~/.config/nerd-fonts-installer/config.yaml</code> and pick your families.</p>
+<pre class="code"><span class="f">release</span>: <span class="s">latest</span>
+<span class="f">refresh_font_cache</span>: <span class="k">true</span>
+<span class="f">families</span>:
+  - <span class="s">JetBrainsMono</span>
+  - <span class="s">Hack</span>
+  - <span class="s">FiraCode</span>
+  - <span class="s">Meslo</span>
+
+<span class="c"># destination defaults to</span>
+<span class="c"># ~/.local/share/fonts/NerdFonts</span></pre>
+        </div>
+
+        <div class="step reveal">
+          <div class="num">3</div>
+          <h3>Preview, then install</h3>
+          <p>Check the plan, run it for real, then select the font in your terminal or editor.</p>
+<pre class="code"><span class="p">$</span> nerd-fonts-installer <span class="k">--dry-run</span>
+<span class="p">$</span> nerd-fonts-installer
+
+<span class="c"># no config? the picker</span>
+<span class="c"># can build one for you</span>
+<span class="p">$</span> nerd-fonts-installer \
+    <span class="k">--interactive</span></pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= INSTALL OPTIONS ================= -->
+  <section id="install">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="eyebrow gradient-text">Install</span>
+        <h2>Pick your flavour</h2>
+        <p>One static binary, no runtime dependencies. <code>fc-cache</code> is used when present and skipped safely when not.</p>
+      </div>
+
+      <div class="install-grid">
+        <div class="install-card reveal">
+          <h3><svg viewBox="0 0 24 24" fill="none" stroke="#ff5faf" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="m3.3 7 8.7 5 8.7-5M12 22V12"/></svg> Snap (Linux)</h3>
+          <p>Classic confinement, because the tool writes real user font directories and refreshes fontconfig.</p>
+<pre class="code"><span class="p">$</span> sudo snap install nerd-fonts-installer <span class="k">--classic</span></pre>
+        </div>
+
+        <div class="install-card reveal">
+          <h3><svg viewBox="0 0 24 24" fill="none" stroke="#46e5e0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5M12 15V3"/></svg> Release tarball</h3>
+          <p>Linux and macOS, amd64 and arm64. The <code>latest</code> tag keeps the URLs stable for scripts.</p>
+<pre class="code"><span class="p">$</span> base=<span class="s">https://github.com/worxbend/nerd-fonts-installer/releases/download/latest</span>
+<span class="p">$</span> file=nerd-fonts-installer_latest_linux_amd64.tar.gz
+
+<span class="p">$</span> curl <span class="k">-LO</span> <span class="s">"$base/$file"</span>
+<span class="p">$</span> curl <span class="k">-LO</span> <span class="s">"$base/checksums.txt"</span>
+<span class="p">$</span> sha256sum <span class="k">--check --ignore-missing</span> checksums.txt
+<span class="p">$</span> tar <span class="k">-xzf</span> <span class="s">"$file"</span></pre>
+        </div>
+
+        <div class="install-card reveal">
+          <h3><svg viewBox="0 0 24 24" fill="none" stroke="#5bf0b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 18 6-6-6-6M8 6l-6 6 6 6"/></svg> From source</h3>
+          <p>Go 1.26 or newer. Nothing else to install.</p>
+<pre class="code"><span class="p">$</span> git clone <span class="s">https://github.com/worxbend/nerd-fonts-installer</span>
+<span class="p">$</span> cd nerd-fonts-installer
+<span class="p">$</span> go build <span class="k">-trimpath</span> <span class="k">-o</span> bin/nerd-fonts-installer \
+    ./cmd/nerd-fonts-installer</pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= CONFIG ================= -->
+  <section id="config">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="eyebrow gradient-text">Reference</span>
+        <h2>Config &amp; flags</h2>
+        <p>Four config keys and six flags. That is the whole surface area.</p>
+      </div>
+
+      <div class="table-wrap reveal" style="margin-bottom:22px">
+        <table>
+          <thead><tr><th>Key</th><th>Required</th><th>Default</th><th>Meaning</th></tr></thead>
+          <tbody>
+            <tr><td><code>release</code></td><td>No</td><td><code>latest</code></td><td>Nerd Fonts release to install from — <code>latest</code> or a tag like <code>v3.4.0</code>.</td></tr>
+            <tr><td><code>destination</code></td><td>No</td><td><code>~/.local/share/fonts/NerdFonts</code></td><td>Root folder for installed families. Each family gets its own subfolder.</td></tr>
+            <tr><td><code>refresh_font_cache</code></td><td>No</td><td><code>false</code></td><td>Run <code>fc-cache -f &lt;destination&gt;</code> after installing.</td></tr>
+            <tr><td><code>families</code></td><td><span class="req">Yes</span></td><td>—</td><td>Font archive names without <code>.zip</code>. Use <code>--font-names</code> to list them.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="table-wrap reveal">
+        <table>
+          <thead><tr><th>Flag</th><th>What it does</th></tr></thead>
+          <tbody>
+            <tr><td><code>--config &lt;path&gt;</code></td><td>Use a specific config file instead of discovering one.</td></tr>
+            <tr><td><code>--dry-run</code></td><td>Print the plan — every URL and destination — without writing anything.</td></tr>
+            <tr><td><code>--font-names</code></td><td>Print YAML-ready family names for the selected release and exit.</td></tr>
+            <tr><td><code>--interactive</code></td><td>Open the terminal picker when no config file is found.</td></tr>
+            <tr><td><code>--icons &lt;mode&gt;</code></td><td>TUI icon set: <code>auto</code>, <code>nerd</code>, <code>unicode</code>, or <code>ascii</code>.</td></tr>
+            <tr><td><code>--version</code></td><td>Print version, commit, and build date.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= FAQ ================= -->
+  <section id="faq">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="eyebrow gradient-text">FAQ</span>
+        <h2>Questions people actually ask</h2>
+      </div>
+
+      <div class="faq">
+        <details class="reveal">
+          <summary>Where does it look for a config file?</summary>
+          <div class="body">
+            <code>--config</code> wins, then <code>NERD_FONTS_INSTALLER_CONFIG</code>, then app-named files
+            in the current directory, then <code>$XDG_CONFIG_HOME</code> (when absolute), then
+            <code>~/.config</code>. It checks <code>nerd-fonts-installer.{yaml,yml,json,conf}</code> and
+            <code>nerd-fonts-installer/config.{yaml,yml,json,conf}</code> at each location.
+          </div>
+        </details>
+        <details class="reveal">
+          <summary>I installed a font but the icons are still boxes.</summary>
+          <div class="body">
+            Installing the font is only half the job — your terminal or editor still has to
+            <em>use</em> it. Select the patched name, e.g. <code>JetBrainsMono Nerd Font</code>, in your
+            app's font setting and restart it.
+          </div>
+        </details>
+        <details class="reveal">
+          <summary>What are the exact family names?</summary>
+          <div class="body">
+            Run <code>nerd-fonts-installer --font-names</code>. It prints a YAML block you can paste
+            straight into <code>families:</code>, matched to whichever release your config pins.
+          </div>
+        </details>
+        <details class="reveal">
+          <summary>Does it work on macOS?</summary>
+          <div class="body">
+            Yes. <code>fc-cache</code> usually is not installed there, so the cache refresh is skipped
+            safely. Many macOS users install into a local folder first and then import with Font Book.
+          </div>
+        </details>
+        <details class="reveal">
+          <summary>Can I pin a release so my dotfiles are reproducible?</summary>
+          <div class="body">
+            Set <code>release: v3.4.0</code>. Pinned releases use the tagged download URL, so the same
+            config produces the same bytes on every machine.
+          </div>
+        </details>
+        <details class="reveal">
+          <summary>Is it safe to run in a bootstrap script?</summary>
+          <div class="body">
+            That is the intended use. Archives are checksum-verified, family names are validated
+            against path traversal, downloads are size-capped, and <code>fc-cache</code> is executed
+            without a shell. Exit codes are stable: <code>0</code> success, <code>2</code> for input you
+            can fix, <code>1</code> for runtime failures.
+          </div>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= CTA ================= -->
+  <section>
+    <div class="wrap">
+      <div class="cta reveal">
+        <h2>Stop unzipping fonts by hand.</h2>
+        <p>Install it, write four lines of YAML, and never think about Nerd Fonts again.</p>
+        <div class="hero-actions" style="margin-top:0">
+          <a class="btn btn-primary" href="https://github.com/worxbend/nerd-fonts-installer/releases">Download latest</a>
+          <a class="btn" href="https://github.com/worxbend/nerd-fonts-installer/wiki">Browse the wiki</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <span>MIT licensed &middot; built with Go and Bubble Tea</span>
+    <nav class="footer-links">
+      <a href="https://github.com/worxbend/nerd-fonts-installer">GitHub</a>
+      <a href="https://github.com/worxbend/nerd-fonts-installer/wiki">Wiki</a>
+      <a href="https://github.com/worxbend/nerd-fonts-installer/releases">Releases</a>
+      <a href="https://github.com/worxbend/nerd-fonts-installer/issues">Issues</a>
+      <a href="https://github.com/ryanoasis/nerd-fonts">Nerd Fonts</a>
+    </nav>
+  </div>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>

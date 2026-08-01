@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1506" height="150" viewBox="0 0 1506.00 150.00" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, &quot;DejaVu Sans Mono&quot;, monospace" font-size="14.0" role="img" aria-label="nerd-fonts-installer --dry-run">
+<defs><linearGradient id="chrome" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#221F35"/><stop offset="1" stop-color="#1C1B2A"/></linearGradient><clipPath id="win"><rect x="0.5" y="0.5" width="1505.00" height="149.00" rx="12.0"/></clipPath></defs>
+<rect x="0.5" y="0.5" width="1505.00" height="149.00" rx="12.0" fill="#12121C" stroke="#2C2A44"/>
+<g clip-path="url(#win)"><rect x="0" y="0" width="1506.00" height="30" fill="url(#chrome)"/><rect x="0" y="29.5" width="1506.00" height="1" fill="#2C2A44"/></g>
+<circle cx="20" cy="15" r="5.5" fill="#FF5F57"/><circle cx="39" cy="15" r="5.5" fill="#FEBC2E"/><circle cx="58" cy="15" r="5.5" fill="#28C840"/>
+<text x="753.00" y="19.5" font-size="12" fill="#8A87A8" text-anchor="middle">nerd-fonts-installer --dry-run</text>
+<text x="18.00" y="44.10" fill="#EDEDF7" textLength="529.20" lengthAdjust="spacingAndGlyphs" xml:space="preserve">Using config /home/dev/.config/nerd-fonts-installer/config.yaml</text>
+<text x="18.00" y="62.10" fill="#5f5fff" textLength="8.40" lengthAdjust="spacingAndGlyphs" xml:space="preserve">•</text>
+<text x="34.80" y="62.10" fill="#EDEDF7" textLength="109.20" lengthAdjust="spacingAndGlyphs" xml:space="preserve">Would install</text>
+<text x="152.40" y="62.10" fill="#5fd7ff" textLength="109.20" lengthAdjust="spacingAndGlyphs" xml:space="preserve" font-weight="700">JetBrainsMono</text>
+<text x="270.00" y="62.10" fill="#EDEDF7" textLength="33.60" lengthAdjust="spacingAndGlyphs" xml:space="preserve">from</text>
+<text x="312.00" y="62.10" fill="#00afff" textLength="688.80" lengthAdjust="spacingAndGlyphs" xml:space="preserve" text-decoration="underline">https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip</text>
+<text x="1009.20" y="62.10" fill="#EDEDF7" textLength="33.60" lengthAdjust="spacingAndGlyphs" xml:space="preserve">into</text>
+<text x="1051.20" y="62.10" fill="#ffafff" textLength="436.80" lengthAdjust="spacingAndGlyphs" xml:space="preserve">/home/dev/.local/share/fonts/NerdFonts/JetBrainsMono</text>
+<text x="18.00" y="80.10" fill="#5f5fff" textLength="8.40" lengthAdjust="spacingAndGlyphs" xml:space="preserve">•</text>
+<text x="34.80" y="80.10" fill="#EDEDF7" textLength="109.20" lengthAdjust="spacingAndGlyphs" xml:space="preserve">Would install</text>
+<text x="152.40" y="80.10" fill="#5fd7ff" textLength="33.60" lengthAdjust="spacingAndGlyphs" xml:space="preserve" font-weight="700">Hack</text>
+<text x="194.40" y="80.10" fill="#EDEDF7" textLength="33.60" lengthAdjust="spacingAndGlyphs" xml:space="preserve">from</text>
+<text x="236.40" y="80.10" fill="#00afff" textLength="613.20" lengthAdjust="spacingAndGlyphs" xml:space="preserve" text-decoration="underline">https://github.com/ryanoasis/nerd-fonts/releases/latest/download/Hack.zip</text>
+<text x="858.00" y="80.10" fill="#EDEDF7" textLength="33.60" lengthAdjust="spacingAndGlyphs" xml:space="preserve">into</text>
+<text x="900.00" y="80.10" fill="#ffafff" textLength="361.20" lengthAdjust="spacingAndGlyphs" xml:space="preserve">/home/dev/.local/share/fonts/NerdFonts/Hack</text>
+<text x="18.00" y="98.10" fill="#5f5fff" textLength="8.40" lengthAdjust="spacingAndGlyphs" xml:space="preserve">•</text>
+<text x="34.80" y="98.10" fill="#EDEDF7" textLength="109.20" lengthAdjust="spacingAndGlyphs" xml:space="preserve">Would install</text>
+<text x="152.40" y="98.10" fill="#5fd7ff" textLength="67.20" lengthAdjust="spacingAndGlyphs" xml:space="preserve" font-weight="700">FiraCode</text>
+<text x="228.00" y="98.10" fill="#EDEDF7" textLength="33.60" lengthAdjust="spacingAndGlyphs" xml:space="preserve">from</text>
+<text x="270.00" y="98.10" fill="#00afff" textLength="646.80" lengthAdjust="spacingAndGlyphs" xml:space="preserve" text-decoration="underline">https://github.com/ryanoasis/nerd-fonts/releases/latest/download/FiraCode.zip</text>
+<text x="925.20" y="98.10" fill="#EDEDF7" textLength="33.60" lengthAdjust="spacingAndGlyphs" xml:space="preserve">into</text>
+<text x="967.20" y="98.10" fill="#ffafff" textLength="394.80" lengthAdjust="spacingAndGlyphs" xml:space="preserve">/home/dev/.local/share/fonts/NerdFonts/FiraCode</text>
+<text x="18.00" y="116.10" fill="#5f5fff" textLength="8.40" lengthAdjust="spacingAndGlyphs" xml:space="preserve">↻</text>
+<text x="34.80" y="116.10" fill="#EDEDF7" textLength="235.20" lengthAdjust="spacingAndGlyphs" xml:space="preserve">Would refresh font cache for</text>
+<text x="278.40" y="116.10" fill="#ffafff" textLength="319.20" lengthAdjust="spacingAndGlyphs" xml:space="preserve">/home/dev/.local/share/fonts/NerdFonts</text>
+</svg>

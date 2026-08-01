@@ -751,10 +751,16 @@ func (m model) screen(header, body, footer string) string {
 	return strings.Join([]string{header, body, footer}, "\n\n")
 }
 
+// screenBody places the list and its side panel. The panel is dropped whenever
+// it does not fit beside the list — a narrow terminal (where it would have to
+// stack underneath) or a short one (where its own wrapped text is taller than
+// the list panel). Either way it would add rows the layout budget does not
+// account for, pushing the frame past the terminal height and getting the top of
+// the view truncated away. See chromeHeight.
 func (m model) screenBody(listView, preview string) string {
 	listPanel := activePanelStyle.Width(m.listPanelWidth()).Render(listView)
-	if !m.wideLayout() {
-		return strings.Join([]string{listPanel, preview}, "\n")
+	if !m.wideLayout() || lipgloss.Height(preview) > lipgloss.Height(listPanel) {
+		return listPanel
 	}
 	return lipgloss.JoinHorizontal(lipgloss.Top, listPanel, "  ", preview)
 }
@@ -769,20 +775,26 @@ func (m model) banner(stepLabel, detail string) string {
 		header = spread(textWidth, wordmark, m.breadcrumb())
 	}
 
-	title := titleStyle.Render(stepLabel)
-	meta := strings.Join([]string{
-		badgePkg.Render(m.icons.Package + " CLI"),
-		badgeFont.Render(m.icons.Font + " patched glyphs"),
-		badgeLaunch.Render(m.icons.Launch + " terminal-ready"),
-	}, " ")
 	lines := []string{
 		header,
 		gradientRule(textWidth),
-		title,
-		subtitleStyle.Render(detail),
-		meta,
+		titleStyle.Render(stepLabel),
+	}
+	if !m.compactBanner() {
+		meta := strings.Join([]string{
+			badgePkg.Render(m.icons.Package + " CLI"),
+			badgeFont.Render(m.icons.Font + " patched glyphs"),
+			badgeLaunch.Render(m.icons.Launch + " terminal-ready"),
+		}, " ")
+		lines = append(lines, subtitleStyle.Render(detail), meta)
 	}
 	return bannerStyle.Width(boxWidth).Render(strings.Join(lines, "\n"))
+}
+
+// compactBanner drops the banner's subtitle and badge rows on short terminals so
+// the whole frame still fits; see chromeHeight.
+func (m model) compactBanner() bool {
+	return m.safeHeight() < 26
 }
 
 // breadcrumb renders the release › families › install stepper, highlighting the
@@ -892,10 +904,29 @@ func statLine(icon, label, value string) string {
 	)
 }
 
+// Layout budget. Everything that is not the list itself costs rows: the banner
+// box (border 2 + padding 2 + 5 content rows, or 3 when compact), two blank
+// separator rows, the list panel's own border and padding (4), and the footer
+// help line. The list height must be safeHeight() minus that budget — a frame
+// even one row taller than the terminal makes Bubble Tea truncate the top of the
+// view, silently eating the banner's top border.
+//
+// minListHeight matches bubbles' own floor for a list.Model; asking for less
+// still renders 9 rows, so budgeting below it would overflow the frame.
+const (
+	chromeHeight        = 16
+	compactChromeHeight = 14
+	minListHeight       = 9
+)
+
 func (m model) listSize() (int, int) {
-	height := m.safeHeight() - 15
-	if height < 8 {
-		height = 8
+	chrome := chromeHeight
+	if m.compactBanner() {
+		chrome = compactChromeHeight
+	}
+	height := m.safeHeight() - chrome
+	if height < minListHeight {
+		height = minListHeight
 	}
 	if m.wideLayout() {
 		return m.listPanelWidth() - 6, height

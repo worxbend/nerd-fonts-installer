@@ -1,11 +1,13 @@
 package tui
 
 import (
+	"strconv"
 	"strings"
 	"testing"
 
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 
 	"github.com/worxbend/nerd-fonts-installer/internal/nerdfonts"
 )
@@ -109,6 +111,49 @@ func TestModelHandlesWindowSizeBeforeFamilyListExists(t *testing.T) {
 	next, _ := m.Update(tea.WindowSizeMsg{Width: 96, Height: 12})
 	if _, ok := next.(model); !ok {
 		t.Fatalf("Update() = %T, want model", next)
+	}
+}
+
+// TestViewFitsTerminalHeight guards the layout arithmetic in listSize: a frame
+// even one row taller than the terminal makes Bubble Tea's renderer truncate the
+// top of the view, which silently eats the banner's top border.
+func TestViewFitsTerminalHeight(t *testing.T) {
+	families := make([]string, 40)
+	for i := range families {
+		families[i] = "Family" + strconv.Itoa(i)
+	}
+	releases := []nerdfonts.Release{
+		{Name: "v3.4.0", TagName: "v3.4.0", Families: families},
+		{Name: "v3.3.0", TagName: "v3.3.0", Families: families},
+	}
+
+	for _, size := range []tea.WindowSizeMsg{
+		{Width: 40, Height: 10}, // below the safeWidth/safeHeight floors
+		{Width: 60, Height: 20},
+		{Width: 80, Height: 24},
+		{Width: 104, Height: 25}, // first wide layout, still a compact banner
+		{Width: 100, Height: 30},
+		{Width: 112, Height: 34},
+		{Width: 160, Height: 50},
+		{Width: 200, Height: 60},
+	} {
+		for _, step := range []step{stepRelease, stepFamilies} {
+			m := newModel(releases, "~/.local/share/fonts/NerdFonts", true, IconUnicode)
+			if step == stepFamilies {
+				next, _ := m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+				m = requireModel(t, next)
+			}
+			next, _ := m.Update(size)
+			m = requireModel(t, next)
+
+			// safeHeight, not size.Height: terminals shorter than the floor
+			// cannot fit the frame at all and are deliberately laid out as if
+			// they were that tall.
+			if got, want := lipgloss.Height(m.View()), m.safeHeight(); got > want {
+				t.Errorf("step %v at %dx%d: view height = %d, want <= %d",
+					step, size.Width, size.Height, got, want)
+			}
+		}
 	}
 }
 
