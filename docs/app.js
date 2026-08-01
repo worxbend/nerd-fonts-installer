@@ -70,7 +70,7 @@
     "tab-families": "Step two: filter and tick families — the plan updates as you go.",
     "tab-install": "Families download, verify, and extract concurrently.",
     "tab-dryrun": "<code>--dry-run</code> shows every URL and destination before anything is written.",
-    "tab-names": "<code>--font-names</code> prints YAML you can paste straight into your config."
+    "tab-names": "<code>--font-names</code> prints YAML for the release you pinned — pipe it, grep it, or save it."
   };
 
   function select(tab) {

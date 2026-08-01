@@ -33,6 +33,12 @@ families:
 YAML
 
 go build -trimpath -o "$work/nerd-fonts-installer" "$repo/cmd/nerd-fonts-installer"
+
+# The session shot runs a real shell, so the binary has to be on PATH inside the
+# sandbox for the typed commands to read the way a reader would type them.
+mkdir -p "$work/home-configured/.local/bin"
+install -m 0755 "$work/nerd-fonts-installer" "$work/home-configured/.local/bin/"
+
 python3 "$here/specs.py"
 
 for spec in "$work"/spec-*.json; do

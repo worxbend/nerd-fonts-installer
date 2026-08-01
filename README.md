@@ -218,7 +218,7 @@ Not sure what a family is called? Ask the tool:
 nerd-fonts-installer --font-names
 ```
 
-<img src="assets/screenshots/cli-font-names.svg" alt="Terminal printing YAML-ready Nerd Font family names" width="330" />
+<img src="assets/screenshots/cli-font-names.svg" alt="Terminal session listing family names, filtering them with grep, and saving them to a file" width="700" />
 
 It prints YAML you can paste straight into `families:`, matched to whichever
 release your config pins.

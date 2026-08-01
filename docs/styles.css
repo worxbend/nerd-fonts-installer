@@ -404,15 +404,23 @@ section { padding: 78px 0; }
   border-color: transparent;
 }
 
+/* Each capture already draws its own terminal window, chrome and all, so the
+   wrapper adds nothing but centring. */
 .shot {
-  border-radius: var(--radius);
-  overflow: hidden;
-  box-shadow: var(--shadow);
-  background: #12121c;
-  border: 1px solid var(--border);
+  display: flex;
+  justify-content: center;
 }
 
-.shot img { display: block; width: 100%; height: auto; }
+/* Never scale a capture past its natural size. These are terminal windows: blown
+   up, the type turns cartoonish and the fixed-size window chrome collides with
+   itself. Narrower captures simply sit centred. */
+.shot img {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  filter: drop-shadow(0 22px 44px #00000080);
+}
 
 .shot-caption {
   text-align: center;

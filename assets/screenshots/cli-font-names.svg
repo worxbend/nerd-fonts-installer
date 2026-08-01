@@ -1,29 +1,25 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="271" height="456" viewBox="0 0 271.20 456.00" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, &quot;DejaVu Sans Mono&quot;, monospace" font-size="14.0" role="img" aria-label="nerd-fonts-installer --font-names">
-<defs><linearGradient id="chrome" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#221F35"/><stop offset="1" stop-color="#1C1B2A"/></linearGradient><clipPath id="win"><rect x="0.5" y="0.5" width="270.20" height="455.00" rx="12.0"/></clipPath></defs>
-<rect x="0.5" y="0.5" width="270.20" height="455.00" rx="12.0" fill="#12121C" stroke="#2C2A44"/>
-<g clip-path="url(#win)"><rect x="0" y="0" width="271.20" height="30" fill="url(#chrome)"/><rect x="0" y="29.5" width="271.20" height="1" fill="#2C2A44"/></g>
+<svg xmlns="http://www.w3.org/2000/svg" width="658" height="384" viewBox="0 0 657.60 384.00" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, &quot;DejaVu Sans Mono&quot;, monospace" font-size="14.0" role="img" aria-label="nerd-fonts-installer --font-names">
+<defs><linearGradient id="chrome" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#221F35"/><stop offset="1" stop-color="#1C1B2A"/></linearGradient><clipPath id="win"><rect x="0.5" y="0.5" width="656.60" height="383.00" rx="12.0"/></clipPath></defs>
+<rect x="0.5" y="0.5" width="656.60" height="383.00" rx="12.0" fill="#12121C" stroke="#2C2A44"/>
+<g clip-path="url(#win)"><rect x="0" y="0" width="657.60" height="30" fill="url(#chrome)"/><rect x="0" y="29.5" width="657.60" height="1" fill="#2C2A44"/></g>
 <circle cx="20" cy="15" r="5.5" fill="#FF5F57"/><circle cx="39" cy="15" r="5.5" fill="#FEBC2E"/><circle cx="58" cy="15" r="5.5" fill="#28C840"/>
-<text x="135.60" y="19.5" font-size="12" fill="#8A87A8" text-anchor="middle">nerd-fonts-installer --font-names</text>
-<text x="18.00" y="44.10" fill="#EDEDF7" textLength="67.20" lengthAdjust="spacingAndGlyphs" xml:space="preserve"># v3.4.0</text>
-<text x="18.00" y="62.10" fill="#EDEDF7" textLength="75.60" lengthAdjust="spacingAndGlyphs" xml:space="preserve">families:</text>
-<text x="34.80" y="80.10" fill="#EDEDF7" textLength="75.60" lengthAdjust="spacingAndGlyphs" xml:space="preserve">- 0xProto</text>
-<text x="34.80" y="98.10" fill="#EDEDF7" textLength="50.40" lengthAdjust="spacingAndGlyphs" xml:space="preserve">- 3270</text>
-<text x="34.80" y="116.10" fill="#EDEDF7" textLength="109.20" lengthAdjust="spacingAndGlyphs" xml:space="preserve">- AdwaitaMono</text>
-<text x="34.80" y="134.10" fill="#EDEDF7" textLength="58.80" lengthAdjust="spacingAndGlyphs" xml:space="preserve">- Agave</text>
-<text x="34.80" y="152.10" fill="#EDEDF7" textLength="117.60" lengthAdjust="spacingAndGlyphs" xml:space="preserve">- AnonymousPro</text>
-<text x="34.80" y="170.10" fill="#EDEDF7" textLength="58.80" lengthAdjust="spacingAndGlyphs" xml:space="preserve">- Arimo</text>
-<text x="34.80" y="188.10" fill="#EDEDF7" textLength="218.40" lengthAdjust="spacingAndGlyphs" xml:space="preserve">- AtkinsonHyperlegibleMono</text>
-<text x="34.80" y="206.10" fill="#EDEDF7" textLength="151.20" lengthAdjust="spacingAndGlyphs" xml:space="preserve">- AurulentSansMono</text>
-<text x="34.80" y="224.10" fill="#EDEDF7" textLength="142.80" lengthAdjust="spacingAndGlyphs" xml:space="preserve">- BigBlueTerminal</text>
-<text x="34.80" y="242.10" fill="#EDEDF7" textLength="193.20" lengthAdjust="spacingAndGlyphs" xml:space="preserve">- BitstreamVeraSansMono</text>
-<text x="34.80" y="260.10" fill="#EDEDF7" textLength="117.60" lengthAdjust="spacingAndGlyphs" xml:space="preserve">- CascadiaCode</text>
-<text x="34.80" y="278.10" fill="#EDEDF7" textLength="117.60" lengthAdjust="spacingAndGlyphs" xml:space="preserve">- CascadiaMono</text>
-<text x="34.80" y="296.10" fill="#EDEDF7" textLength="117.60" lengthAdjust="spacingAndGlyphs" xml:space="preserve">- CodeNewRoman</text>
-<text x="34.80" y="314.10" fill="#EDEDF7" textLength="142.80" lengthAdjust="spacingAndGlyphs" xml:space="preserve">- ComicShannsMono</text>
-<text x="34.80" y="332.10" fill="#EDEDF7" textLength="100.80" lengthAdjust="spacingAndGlyphs" xml:space="preserve">- CommitMono</text>
-<text x="34.80" y="350.10" fill="#EDEDF7" textLength="75.60" lengthAdjust="spacingAndGlyphs" xml:space="preserve">- Cousine</text>
-<text x="34.80" y="368.10" fill="#EDEDF7" textLength="84.00" lengthAdjust="spacingAndGlyphs" xml:space="preserve">- D2Coding</text>
-<text x="34.80" y="386.10" fill="#EDEDF7" textLength="126.00" lengthAdjust="spacingAndGlyphs" xml:space="preserve">- DaddyTimeMono</text>
-<text x="34.80" y="404.10" fill="#EDEDF7" textLength="134.40" lengthAdjust="spacingAndGlyphs" xml:space="preserve">- DejaVuSansMono</text>
-<text x="34.80" y="422.10" fill="#EDEDF7" textLength="126.00" lengthAdjust="spacingAndGlyphs" xml:space="preserve">- DepartureMono</text>
+<text x="328.80" y="19.5" font-size="12" fill="#8A87A8" text-anchor="middle">nerd-fonts-installer --font-names</text>
+<text x="18.00" y="44.10" fill="#EDEDF7" textLength="378.00" lengthAdjust="spacingAndGlyphs" xml:space="preserve">$ nerd-fonts-installer --font-names | head -8</text>
+<text x="18.00" y="62.10" fill="#EDEDF7" textLength="67.20" lengthAdjust="spacingAndGlyphs" xml:space="preserve"># v3.4.0</text>
+<text x="18.00" y="80.10" fill="#EDEDF7" textLength="75.60" lengthAdjust="spacingAndGlyphs" xml:space="preserve">families:</text>
+<text x="34.80" y="98.10" fill="#EDEDF7" textLength="75.60" lengthAdjust="spacingAndGlyphs" xml:space="preserve">- 0xProto</text>
+<text x="34.80" y="116.10" fill="#EDEDF7" textLength="50.40" lengthAdjust="spacingAndGlyphs" xml:space="preserve">- 3270</text>
+<text x="34.80" y="134.10" fill="#EDEDF7" textLength="109.20" lengthAdjust="spacingAndGlyphs" xml:space="preserve">- AdwaitaMono</text>
+<text x="34.80" y="152.10" fill="#EDEDF7" textLength="58.80" lengthAdjust="spacingAndGlyphs" xml:space="preserve">- Agave</text>
+<text x="34.80" y="170.10" fill="#EDEDF7" textLength="117.60" lengthAdjust="spacingAndGlyphs" xml:space="preserve">- AnonymousPro</text>
+<text x="34.80" y="188.10" fill="#EDEDF7" textLength="58.80" lengthAdjust="spacingAndGlyphs" xml:space="preserve">- Arimo</text>
+<text x="18.00" y="206.10" fill="#EDEDF7" textLength="621.60" lengthAdjust="spacingAndGlyphs" xml:space="preserve">$ nerd-fonts-installer --font-names | grep -iE 'jetbrains|hack|fira|meslo'</text>
+<text x="34.80" y="224.10" fill="#EDEDF7" textLength="84.00" lengthAdjust="spacingAndGlyphs" xml:space="preserve">- FiraCode</text>
+<text x="34.80" y="242.10" fill="#EDEDF7" textLength="84.00" lengthAdjust="spacingAndGlyphs" xml:space="preserve">- FiraMono</text>
+<text x="34.80" y="260.10" fill="#EDEDF7" textLength="50.40" lengthAdjust="spacingAndGlyphs" xml:space="preserve">- Hack</text>
+<text x="34.80" y="278.10" fill="#EDEDF7" textLength="126.00" lengthAdjust="spacingAndGlyphs" xml:space="preserve">- JetBrainsMono</text>
+<text x="34.80" y="296.10" fill="#EDEDF7" textLength="58.80" lengthAdjust="spacingAndGlyphs" xml:space="preserve">- Meslo</text>
+<text x="18.00" y="314.10" fill="#EDEDF7" textLength="571.20" lengthAdjust="spacingAndGlyphs" xml:space="preserve">$ nerd-fonts-installer --font-names &gt; fonts.yaml &amp;&amp; wc -l fonts.yaml</text>
+<text x="18.00" y="332.10" fill="#EDEDF7" textLength="109.20" lengthAdjust="spacingAndGlyphs" xml:space="preserve">73 fonts.yaml</text>
+<text x="18.00" y="350.10" fill="#EDEDF7" textLength="8.40" lengthAdjust="spacingAndGlyphs" xml:space="preserve">$</text>
 </svg>

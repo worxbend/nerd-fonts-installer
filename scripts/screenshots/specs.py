@@ -24,7 +24,7 @@ BARE = os.path.join(WORK, "home-bare")  # has none -> --interactive opens the pi
 DOWN = "\x1b[B"
 
 
-def jail(home):
+def sandbox(home, extra=()):
     """bwrap args that replace the real /home with a throwaway one.
 
     This is what keeps the capture honest: the tool really downloads, extracts
@@ -38,8 +38,27 @@ def jail(home):
         "--ro-bind", HOST_BIN, BIN,
         "--setenv", "HOME", FAKE_HOME,
         "--chdir", FAKE_HOME,
-        "sh", "-c",
+        *extra,
     ]
+
+
+def jail(home):
+    """Run one command in the sandbox via `sh -c`."""
+    return sandbox(home) + ["sh", "-c"]
+
+
+def shell(home):
+    """Run a real interactive bash in the sandbox.
+
+    Used for the session shot: a genuine shell means genuine prompts and genuine
+    output, rather than a prompt string pasted in to look like one. refresh.sh
+    puts the binary on PATH inside the sandbox so the commands on screen read
+    exactly as a reader would type them.
+    """
+    return sandbox(home, [
+        "--setenv", "PS1", "$ ",
+        "--setenv", "PATH", f"{FAKE_HOME}/.local/bin:/usr/local/bin:/usr/bin:/bin",
+    ]) + ["bash", "--norc", "--noprofile", "-i"]
 
 
 ENV = {"TERM": "xterm-256color", "COLORTERM": "truecolor"}
@@ -68,11 +87,21 @@ SPECS = {
             {"wait": 1.2, "send": ""},
         ],
     },
+    # A typed session rather than one command's output: --font-names is only
+    # interesting in a pipeline, and a lone column of family names renders as a
+    # tall sliver that looks wrong next to the other shots.
     "cli-font-names": {
-        "cmd": jail(CONFIGURED) + [f"exec {BIN} --font-names 2>/dev/null | head -22"],
+        "cmd": shell(CONFIGURED),
         "title": "nerd-fonts-installer --font-names",
-        "cols": 92, "rows": 26, "timeout": 60,
-        "script": [{"wait": 25.0, "send": ""}],
+        "cols": 100, "rows": 30, "timeout": 240,
+        "script": [
+            {"wait": 1.0, "send": "nerd-fonts-installer --font-names | head -8\r"},
+            {"wait": 30.0,
+             "send": "nerd-fonts-installer --font-names | grep -iE 'jetbrains|hack|fira|meslo'\r"},
+            {"wait": 30.0,
+             "send": "nerd-fonts-installer --font-names > fonts.yaml && wc -l fonts.yaml\r"},
+            {"wait": 30.0, "send": ""},
+        ],
     },
     "cli-dry-run": {
         "cmd": jail(CONFIGURED) + [f"exec {BIN} --dry-run"],
