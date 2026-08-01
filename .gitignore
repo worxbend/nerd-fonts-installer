@@ -3,3 +3,5 @@ dist/
 coverage.out
 *.test
 snapcraft-login.txt
+scripts/screenshots/.work/
+__pycache__/

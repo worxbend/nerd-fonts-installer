@@ -47,7 +47,19 @@ dev-container setup.
   (`Validate`), used at both trust boundaries (`config` and `fonts`). Security
   boundary — do not duplicate it.
 - `internal/tui` — Bubble Tea picker: release step → families step, with
-  `IconMode` (auto/nerd/unicode/ascii) icon sets.
+  `IconMode` (auto/nerd/unicode/ascii) icon sets. The frame is **height
+  budgeted** (`chromeHeight`/`compactChromeHeight`/`minListHeight`): a view even
+  one row taller than the terminal makes Bubble Tea truncate the top of the
+  frame. `screenBody` drops the side panel when it will not fit beside the list;
+  `compactBanner` drops the banner's subtitle and badges on short terminals.
+  `TestViewFitsTerminalHeight` guards the arithmetic.
+- `docs/` — the GitHub Pages microsite (plain HTML/CSS/JS, no build step). It
+  references shared repository assets, so `.github/workflows/pages.yml` publishes
+  `docs/` **plus** `assets/` rather than duplicating files.
+- `assets/screenshots/` — SVG terminal screenshots used by the README and the
+  site, generated from real runs by `scripts/screenshots/` (pty capture with
+  `pyte` → SVG render; `bwrap` shadows `$HOME` so a genuine install lands in a
+  throwaway directory). Regenerate with `scripts/screenshots/refresh.sh`.
 - `snap/snapcraft.yaml` — Snapcraft packaging for the CLI. It builds the Go
   command with the same ldflags contract and uses classic confinement so the
   tool can write real user font directories and refresh fontconfig.
@@ -85,6 +97,9 @@ dev-container setup.
   actionlint. Mirror that locally before pushing.
 - Release CI publishes versioned GitHub releases for `v*` tags and refreshes a
   moving `latest` release with stable asset names for fixed download URLs.
+- Pages CI (`.github/workflows/pages.yml`) deploys the microsite on pushes to
+  `main` touching `docs/` or `assets/`. Repo metadata (description, homepage,
+  topics) and the wiki are maintained out-of-tree via `gh`.
 - Snap CI builds snaps on PRs/main/tags/manual runs. Non-PR runs publish to the
   Snap Store (`main` → `edge`, `v*` tags → `stable`, manual → chosen channel)
   using the `SNAPCRAFT_STORE_CREDENTIALS` repository secret. The snap name must
