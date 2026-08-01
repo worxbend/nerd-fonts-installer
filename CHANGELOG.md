@@ -9,6 +9,11 @@
 - Terminal screenshots in `assets/screenshots/`, generated from real runs of the
   tool by the harness in `scripts/screenshots/`.
 - A social preview card (`assets/social-card.svg` / `.png`).
+- `docs/install.sh`, served from the microsite, so the documented install is
+  `curl -fsSL https://worxbend.github.io/nerd-fonts-installer/install.sh | sh`.
+  It detects OS and architecture, verifies the archive's SHA-256 against the
+  release manifest, and installs into `~/.local/bin` without root.
+  `NFI_VERSION` pins a release tag and `NFI_INSTALL_DIR` changes the target.
 
 ### Fixed
 
@@ -24,6 +29,8 @@
 - Bumped the `govulncheck` toolchain pin to `go1.26.5`, which carries the fix for
   GO-2026-5856 in `crypto/tls`. `make verify` failed on the stale pin; CI already
   resolved `1.26.x` to a patched toolchain.
+- The microsite now leads with the install script instead of the snap package.
+  The tarball and from-source routes are unchanged.
 
 ## v1.0.6 - 2026-06-29
 

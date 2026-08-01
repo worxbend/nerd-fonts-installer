@@ -80,13 +80,13 @@
       <p class="badges">
         <a href="https://github.com/worxbend/nerd-fonts-installer/releases"><img alt="Latest release" src="https://img.shields.io/github/v/release/worxbend/nerd-fonts-installer?sort=semver&amp;color=C75CFF&amp;label=release&amp;style=flat-square"></a>
         <a href="https://github.com/worxbend/nerd-fonts-installer/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/worxbend/nerd-fonts-installer/ci.yml?branch=main&amp;label=CI&amp;style=flat-square&amp;color=5BF0B8"></a>
-        <a href="https://snapcraft.io/nerd-fonts-installer"><img alt="Snap Store" src="https://img.shields.io/badge/snap-install-FF5FAF?logo=snapcraft&amp;logoColor=white&amp;style=flat-square"></a>
+        <img alt="Platform: Linux and macOS" src="https://img.shields.io/badge/platform-Linux%20%7C%20macOS-FF5FAF?style=flat-square">
         <a href="https://github.com/worxbend/nerd-fonts-installer/blob/main/LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/license-MIT-5BA8FF?style=flat-square"></a>
         <img alt="Go 1.26+" src="https://img.shields.io/badge/Go-1.26+-46E5E0?logo=go&amp;logoColor=white&amp;style=flat-square">
       </p>
 
       <div class="copy-box">
-        <code data-copy="sudo snap install nerd-fonts-installer --classic"><span class="prompt">$</span> sudo snap install nerd-fonts-installer --classic</code>
+        <code data-copy="curl -fsSL https://worxbend.github.io/nerd-fonts-installer/install.sh | sh"><span class="prompt">$</span> curl -fsSL https://worxbend.github.io/nerd-fonts-installer/install.sh | sh</code>
         <button class="copy-btn" type="button" aria-label="Copy install command">
           <svg class="clip" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
           <svg class="check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
@@ -202,10 +202,9 @@
         <div class="step reveal">
           <div class="num">1</div>
           <h3>Install the binary</h3>
-          <p>Snap on Linux, or grab a tarball for your platform — see <a href="#install" style="color:var(--blue)">Install</a>.</p>
-<pre class="code"><span class="p">$</span> sudo snap install \
-    nerd-fonts-installer \
-    <span class="k">--classic</span>
+          <p>One command. Detects your platform, verifies the checksum, drops the binary in <code>~/.local/bin</code>.</p>
+<pre class="code"><span class="p">$</span> curl <span class="k">-fsSL</span> <span class="s">https://worxbend.github.io\
+/nerd-fonts-installer/install.sh</span> | sh
 
 <span class="p">$</span> nerd-fonts-installer \
     <span class="k">--version</span></pre>
@@ -254,9 +253,13 @@
 
       <div class="install-grid">
         <div class="install-card reveal">
-          <h3><svg viewBox="0 0 24 24" fill="none" stroke="#ff5faf" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="m3.3 7 8.7 5 8.7-5M12 22V12"/></svg> Snap (Linux)</h3>
-          <p>Classic confinement, because the tool writes real user font directories and refreshes fontconfig.</p>
-<pre class="code"><span class="p">$</span> sudo snap install nerd-fonts-installer <span class="k">--classic</span></pre>
+          <h3><svg viewBox="0 0 24 24" fill="none" stroke="#ff5faf" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m6 9 3 3-3 3M13 15h5"/></svg> Install script <span style="color:var(--mint);font-size:12px;font-weight:600">RECOMMENDED</span></h3>
+          <p>Detects your OS and architecture, verifies the SHA-256 against the release manifest, and installs into <code>~/.local/bin</code>. No root, nothing system-wide.</p>
+<pre class="code"><span class="p">$</span> curl <span class="k">-fsSL</span> <span class="s">https://worxbend.github.io/nerd-fonts-installer/install.sh</span> | sh
+
+<span class="c"># pin a version, or install somewhere else</span>
+<span class="p">$</span> curl <span class="k">-fsSL</span> <span class="s">https://worxbend.github.io/nerd-fonts-installer/install.sh</span> \
+    | NFI_VERSION=<span class="s">v1.0.7</span> NFI_INSTALL_DIR=<span class="s">~/bin</span> sh</pre>
         </div>
 
         <div class="install-card reveal">
@@ -329,6 +332,20 @@
       </div>
 
       <div class="faq">
+        <details class="reveal">
+          <summary>I'd rather not pipe a script into my shell.</summary>
+          <div class="body">
+            Fair. <a href="install.sh" style="color:var(--blue)">Read it first</a> — it is short, dependency-free
+            POSIX <code>sh</code> that does four things: detect your platform, download the release archive,
+            verify its SHA-256, and copy one binary into <code>~/.local/bin</code>. Or download and run it
+            separately:
+            <br><br>
+            <code>curl -fsSL -O https://worxbend.github.io/nerd-fonts-installer/install.sh</code><br>
+            <code>less install.sh &amp;&amp; sh install.sh</code>
+            <br><br>
+            The tarball and from-source routes above skip the script entirely.
+          </div>
+        </details>
         <details class="reveal">
           <summary>Where does it look for a config file?</summary>
           <div class="body">
