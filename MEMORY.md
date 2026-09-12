@@ -18,12 +18,20 @@ dev-container setup.
 ## Architecture (package map)
 
 - `cmd/nerd-fonts-installer` — entrypoint & orchestration.
-  - `run(ctx, args, stdin, stdout, stderr, deps) int` is the real, testable main;
-    `main()` only wires os values into it.
+  - `run(ctx, args, streams, deps) int` is the real, testable main; `main()`
+    only wires os values into it. The command package bundles stdin/stdout/stderr
+    into `ioStreams` and passes small option structs through helpers to keep CLI
+    plumbing testable without high-parameter helper signatures.
   - Dependency injection via the `dependencies` struct of **function-typed
-    fields** (`loadConfig`, `discoverConfig`, `listReleases`, `runTUI`,
-    `installFonts`, `isTerminal`) + `withDefaults()`. This is deliberately NOT
-    an interface seam — keep it that way for a CLI this size.
+    fields** (`loadConfig`, `discoverConfig`, `defaultConfigPaths`,
+    `listReleases`, `runTUI`, `installFonts`, `isTerminal`) + `withDefaults()`.
+    This is deliberately NOT an interface seam — keep it that way for a CLI
+    this size.
+  - CLI shape: bare `nerd-fonts-installer` still runs the install flow, but the
+    command now also exposes `install`, `list`, `info`, `version`, and
+    `completion` subcommands. Dispatch checks the first positional token after
+    any leading root flags; legacy `--font-names` and `--version` remain
+    supported as backward-compatible aliases.
   - Exit-code contract (`exitCodeFor`): `0` success/cancelled, `2`
     user-correctable input (missing config, unknown/absent release), `1`
     runtime failure (network/fs/install).
@@ -84,7 +92,9 @@ dev-container setup.
 7. **Download integrity:** each zip is verified against the release's
    `SHA-256.txt` manifest (`fetchChecksums` → per-family digest). Verification
    is *best-effort*: a missing manifest warns and proceeds; a digest **mismatch
-   aborts** the install. Do not weaken the mismatch-is-fatal rule.
+   aborts** the install. The manifest fetch itself is timeout-bounded and any
+   rollback failure during the atomic swap must be surfaced with recovery
+   context. Do not weaken the mismatch-is-fatal rule.
 
 ## Dev / build workflow
 

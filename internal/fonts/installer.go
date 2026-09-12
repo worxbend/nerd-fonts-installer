@@ -17,6 +17,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/charmbracelet/lipgloss"
@@ -32,7 +33,8 @@ const (
 	maxConcurrentInstalls = 4
 	// perDownloadTimeout bounds a single family's download+extract, derived per
 	// family so it composes with group cancellation instead of a global clock.
-	perDownloadTimeout = 10 * time.Minute
+	perDownloadTimeout    = 10 * time.Minute
+	extractCopyBufferSize = 32 << 10
 )
 
 type Options struct {
@@ -62,6 +64,12 @@ var (
 	fontStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true)
 	linkStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("39")).Underline(true)
 	pathStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("219"))
+
+	checksumFetchTimeout = perDownloadTimeout
+	renameDirectoryFn    = os.Rename
+	removeAllFn          = os.RemoveAll
+	statFn               = os.Stat
+	refreshFontCacheFn   = refreshFontCache
 )
 
 func Install(ctx context.Context, opts Options) error {
@@ -133,22 +141,28 @@ func Install(ctx context.Context, opts Options) error {
 
 	group, groupCtx := errgroup.WithContext(ctx)
 	group.SetLimit(min(len(families), maxConcurrentInstalls))
+	var installedAny atomic.Bool
 	for _, family := range families {
 		group.Go(func() error {
 			if err := installFamily(groupCtx, opts.HTTPClient, opts.Release, family, root, checksums[family], stderr); err != nil {
 				return fmt.Errorf("install Nerd Font family %s: %w", family, err)
 			}
+			installedAny.Store(true)
 			return nil
 		})
 	}
-	if err := group.Wait(); err != nil {
-		return err
+	installErr := group.Wait()
+	if opts.RefreshFontCache && installedAny.Load() {
+		refreshErr := refreshFontCacheFn(ctx, root, opts.Stdout, opts.Stderr)
+		if installErr != nil {
+			if refreshErr != nil {
+				_, _ = fmt.Fprintf(opts.Stderr, "%s Font cache refresh after partial install failed (%v).\n", warnStyle.Render("•"), refreshErr)
+			}
+			return installErr
+		}
+		return refreshErr
 	}
-
-	if opts.RefreshFontCache {
-		return refreshFontCache(ctx, root, opts.Stdout, opts.Stderr)
-	}
-	return nil
+	return installErr
 }
 
 // syncWriter serializes whole-line progress writes from concurrent installs so
@@ -267,8 +281,11 @@ func installFamily(ctx context.Context, client *http.Client, release, family, ro
 		_ = os.RemoveAll(tempDestination)
 	}()
 
-	if err := ExtractFontZip(temp.Name(), tempDestination); err != nil {
+	if err := ExtractFontZip(ctx, temp.Name(), tempDestination); err != nil {
 		return fmt.Errorf("extract %s to %s: %w", temp.Name(), tempDestination, err)
+	}
+	if err := ctx.Err(); err != nil {
+		return err
 	}
 	if err := replaceDirectory(tempDestination, destination); err != nil {
 		return err
@@ -291,6 +308,9 @@ func ChecksumURL(release string) string {
 // manifest cannot be fetched it warns and returns nil so installs proceed
 // unverified. Only a later digest mismatch (in installFamily) is fatal.
 func fetchChecksums(ctx context.Context, client *http.Client, release string, stderr io.Writer) map[string]string {
+	ctx, cancel := context.WithTimeout(ctx, checksumFetchTimeout)
+	defer cancel()
+
 	checksumURL := ChecksumURL(release)
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, checksumURL, nil)
 	if err != nil {
@@ -341,7 +361,7 @@ func ReleaseURL(release, family string) string {
 	return fmt.Sprintf("https://github.com/ryanoasis/nerd-fonts/releases/download/%s/%s.zip", url.PathEscape(release), family)
 }
 
-func ExtractFontZip(path, destination string) error {
+func ExtractFontZip(ctx context.Context, path, destination string) error {
 	if err := os.MkdirAll(destination, 0o755); err != nil { //nolint:gosec // Extracted font directories need normal user/app traversal permissions.
 		return fmt.Errorf("create extraction destination %s: %w", destination, err)
 	}
@@ -356,6 +376,9 @@ func ExtractFontZip(path, destination string) error {
 	extracted := 0
 	var totalBytes int64
 	for _, file := range archive.File {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
 		if file.FileInfo().IsDir() || !isFontFile(file.Name) {
 			continue
 		}
@@ -372,7 +395,7 @@ func ExtractFontZip(path, destination string) error {
 		if totalBytes > maxArchiveBytes {
 			return fmt.Errorf("extract %s: total uncompressed size exceeds %d byte limit", path, maxArchiveBytes)
 		}
-		if err := extractZipFile(file, filepath.Join(destination, filepath.Base(file.Name)), maxFontFileBytes); err != nil {
+		if err := extractZipFile(ctx, file, filepath.Join(destination, filepath.Base(file.Name)), maxFontFileBytes); err != nil {
 			return fmt.Errorf("extract %s: %w", file.Name, err)
 		}
 		extracted++
@@ -399,7 +422,7 @@ func exceedsInt64Limit(value uint64, limit int64) bool {
 	return int64(value) > limit
 }
 
-func extractZipFile(file *zip.File, destination string, limit int64) error {
+func extractZipFile(ctx context.Context, file *zip.File, destination string, limit int64) error {
 	reader, err := file.Open()
 	if err != nil {
 		return fmt.Errorf("open zipped font %s: %w", file.Name, err)
@@ -421,7 +444,7 @@ func extractZipFile(file *zip.File, destination string, limit int64) error {
 
 	// Backstop the declared-size check against a zip entry whose header lies
 	// about UncompressedSize64; the extra byte detects an over-limit stream.
-	written, err := io.Copy(out, io.LimitReader(reader, limit+1))
+	written, err := copyWithContext(ctx, out, io.LimitReader(reader, limit+1))
 	if err != nil {
 		return fmt.Errorf("copy font file %s to %s: %w", file.Name, destination, err)
 	}
@@ -437,14 +460,44 @@ func extractZipFile(file *zip.File, destination string, limit int64) error {
 	return nil
 }
 
+func copyWithContext(ctx context.Context, dst io.Writer, src io.Reader) (int64, error) {
+	buf := make([]byte, extractCopyBufferSize)
+	var written int64
+
+	for {
+		if err := ctx.Err(); err != nil {
+			return written, err
+		}
+
+		nr, readErr := src.Read(buf)
+		if nr > 0 {
+			nw, writeErr := dst.Write(buf[:nr])
+			written += int64(nw)
+			if writeErr != nil {
+				return written, writeErr
+			}
+			if nw != nr {
+				return written, io.ErrShortWrite
+			}
+		}
+
+		if readErr != nil {
+			if errors.Is(readErr, io.EOF) {
+				return written, nil
+			}
+			return written, readErr
+		}
+	}
+}
+
 func replaceDirectory(source, destination string) error {
 	backup := destination + ".old"
-	if err := os.RemoveAll(backup); err != nil {
+	if err := removeAllFn(backup); err != nil {
 		return fmt.Errorf("remove old backup %s: %w", backup, err)
 	}
 
 	destinationExists := true
-	if _, err := os.Stat(destination); err != nil {
+	if _, err := statFn(destination); err != nil {
 		if !os.IsNotExist(err) {
 			return fmt.Errorf("inspect existing destination %s: %w", destination, err)
 		}
@@ -452,14 +505,20 @@ func replaceDirectory(source, destination string) error {
 	}
 
 	if destinationExists {
-		if err := os.Rename(destination, backup); err != nil {
+		if err := renameDirectoryFn(destination, backup); err != nil {
 			return fmt.Errorf("move existing destination %s to %s: %w", destination, backup, err)
 		}
 	}
 
-	if err := os.Rename(source, destination); err != nil {
+	if err := renameDirectoryFn(source, destination); err != nil {
 		if destinationExists {
-			_ = os.Rename(backup, destination)
+			restoreErr := renameDirectoryFn(backup, destination)
+			if restoreErr != nil {
+				return errors.Join(
+					fmt.Errorf("move extracted fonts %s to %s: %w", source, destination, err),
+					fmt.Errorf("restore previous fonts from %s to %s after failed install: %w", backup, destination, restoreErr),
+				)
+			}
 		}
 		return fmt.Errorf("move extracted fonts %s to %s: %w", source, destination, err)
 	}
@@ -468,7 +527,7 @@ func replaceDirectory(source, destination string) error {
 	// destination. Removing the backup is best-effort cleanup and must not turn
 	// a succeeded install into a reported failure. A leftover ".old" directory
 	// is harmless and is cleared by the RemoveAll at the top of the next run.
-	_ = os.RemoveAll(backup)
+	_ = removeAllFn(backup)
 	return nil
 }
 

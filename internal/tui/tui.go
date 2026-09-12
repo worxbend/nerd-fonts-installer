@@ -269,8 +269,7 @@ type loadReleasesMsg struct {
 
 type loadingModel struct {
 	spinner spinner.Model
-	load    func(context.Context) ([]nerdfonts.Release, error)
-	ctx     context.Context
+	load    func() ([]nerdfonts.Release, error)
 	message string
 	state   *loadingState
 }
@@ -301,8 +300,9 @@ func LoadReleases(
 
 	program := tea.NewProgram(loadingModel{
 		spinner: s,
-		load:    load,
-		ctx:     ctx,
+		load: func() ([]nerdfonts.Release, error) {
+			return load(ctx)
+		},
 		message: "Loading Nerd Fonts releases",
 		state:   &loadingState{},
 	}, programOptions...)
@@ -323,7 +323,7 @@ func LoadReleases(
 
 func (m loadingModel) Init() tea.Cmd {
 	return tea.Batch(m.spinner.Tick, func() tea.Msg {
-		releases, err := m.load(m.ctx)
+		releases, err := m.load()
 		return loadReleasesMsg{releases: releases, err: err}
 	})
 }

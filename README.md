@@ -112,7 +112,7 @@ export PATH="$HOME/.local/bin:$PATH"
 Check it works:
 
 ```bash
-nerd-fonts-installer --version
+nerd-fonts-installer version
 ```
 
 </details>
@@ -203,7 +203,7 @@ release, filter and tick families, press <kbd>enter</kbd>.
 | 🔒 **Checksum verified** | Every archive is checked against the release's `SHA-256.txt`. A mismatch aborts the install. |
 | ⚡ **Concurrent** | Families download and extract in parallel, with clean non-interleaved output. |
 | ♻️ **Atomic** | Staged in a temp dir, renamed into place, `.old` backup kept. A failed download never leaves half a font. |
-| 👀 **Previewable** | `--dry-run` prints the plan; `--font-names` prints paste-ready family names. |
+| 👀 **Previewable** | `--dry-run` prints the plan; `list` and `--font-names` print paste-ready family names. |
 | 📌 **Pinnable** | `release: v3.4.0` gives you the same bytes on every machine. |
 | 🧹 **Tidy** | Installs only `.ttf`, `.otf`, and `.ttc`, one folder per family. |
 | 🐧🍎 **Portable** | Single static binary. `fc-cache` is refreshed when present, skipped safely when not. |
@@ -215,13 +215,14 @@ release, filter and tick families, press <kbd>enter</kbd>.
 Not sure what a family is called? Ask the tool:
 
 ```bash
-nerd-fonts-installer --font-names
+nerd-fonts-installer list
 ```
 
 <img src="assets/screenshots/cli-font-names.svg" alt="Terminal session listing family names, filtering them with grep, and saving them to a file" width="700" />
 
-It prints YAML you can paste straight into `families:`, matched to whichever
-release your config pins.
+It prints one family per line by default, so you can grep, pipe, or diff it
+easily. Want the old YAML-ready block? `--font-names` is still available as a
+backward-compatible alias, and `list --json` adds machine-readable output.
 
 ---
 
@@ -346,22 +347,42 @@ Exit codes are stable, so this is safe under `set -e`: `0` success or cancelled,
 
 ```text
 nerd-fonts-installer [flags]
+nerd-fonts-installer install [flags]
+nerd-fonts-installer list [fonts] [flags]
+nerd-fonts-installer info [flags]
+nerd-fonts-installer version [flags]
+nerd-fonts-installer completion [bash|zsh]
 ```
+
+### Commands
+
+| Command | What it does |
+| --- | --- |
+| `install` | Install fonts from config; also the default when you pass no subcommand. |
+| `list` | List all family names for the resolved release, one per line or as JSON. |
+| `info` | Print resolved config, release, destination, families, and build/runtime diagnostics. |
+| `version` | Print version, commit, date, Go runtime, and platform information. |
+| `completion` | Print a bash or zsh completion script. |
+
+### Common flags
 
 | Flag | What it does |
 | --- | --- |
 | `--config <path>` | Use a specific config file. |
 | `--dry-run` | Print the plan without installing anything. |
-| `--font-names` | Print YAML-ready family names and exit. |
+| `--font-names` | Deprecated alias for `list`; keeps the old YAML-ready output. |
 | `--interactive` | Open the terminal picker when no config is found. |
 | `--icons <mode>` | TUI icons: `auto` (default), `nerd`, `unicode`, `ascii`. |
-| `--version` | Print version, commit, and build date. |
+| `--json` | Print machine-readable JSON for `list`, `info`, and `version`. |
+| `--release <tag>` | Inspect a specific release with `list` or `--font-names`. |
+| `--verbose`, `-v` | Print extra diagnostics to stderr without changing stdout. |
+| `--version` | Backward-compatible alias for `version`. |
 
 ```bash
 nerd-fonts-installer --dry-run
-nerd-fonts-installer --config fonts.yaml
-nerd-fonts-installer --font-names
-nerd-fonts-installer --interactive --icons nerd
+nerd-fonts-installer list --release v3.4.0 --json
+nerd-fonts-installer info
+nerd-fonts-installer completion bash > ~/.local/share/bash-completion/completions/nerd-fonts-installer
 ```
 
 <img src="assets/screenshots/cli-dry-run.svg" alt="A dry run listing exactly what would be downloaded and where it would be installed" width="900" />
@@ -437,7 +458,8 @@ The same family is listed twice under `families:`. Remove the duplicate.
 <br>
 
 Almost always a wrong family name or release tag. Run
-`nerd-fonts-installer --font-names` and copy the exact name from the output.
+`nerd-fonts-installer list` (or the legacy `--font-names`) and copy the exact
+name from the output.
 
 </details>
 

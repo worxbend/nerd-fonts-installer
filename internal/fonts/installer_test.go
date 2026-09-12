@@ -3,14 +3,17 @@ package fonts
 import (
 	"archive/zip"
 	"bytes"
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"io"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestReleaseURL(t *testing.T) {
@@ -77,7 +80,7 @@ func TestExtractFontZipOnlyExtractsFonts(t *testing.T) {
 	}
 
 	destination := filepath.Join(temp, "out")
-	if err := ExtractFontZip(archivePath, destination); err != nil {
+	if err := ExtractFontZip(t.Context(), archivePath, destination); err != nil {
 		t.Fatalf("ExtractFontZip() error = %v", err)
 	}
 	for _, name := range []string{"Font.ttf", "Font.otf"} {
@@ -97,7 +100,7 @@ func TestExtractFontZipRejectsInvalidZip(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err := ExtractFontZip(archivePath, filepath.Join(temp, "out"))
+	err := ExtractFontZip(t.Context(), archivePath, filepath.Join(temp, "out"))
 	if err == nil {
 		t.Fatal("ExtractFontZip() error = nil, want invalid zip error")
 	}
@@ -128,7 +131,7 @@ func TestExtractFontZipRejectsArchiveWithoutFonts(t *testing.T) {
 		t.Fatal(closeErr)
 	}
 
-	err = ExtractFontZip(archivePath, filepath.Join(temp, "out"))
+	err = ExtractFontZip(t.Context(), archivePath, filepath.Join(temp, "out"))
 	if err == nil {
 		t.Fatal("ExtractFontZip() error = nil, want empty archive error")
 	}
@@ -307,7 +310,7 @@ func TestExtractFontZipRejectsOversizeFontFile(t *testing.T) {
 		t.Fatal(closeErr)
 	}
 
-	err = ExtractFontZip(archivePath, filepath.Join(temp, "out"))
+	err = ExtractFontZip(t.Context(), archivePath, filepath.Join(temp, "out"))
 	if err == nil {
 		t.Fatal("ExtractFontZip() error = nil, want oversize error")
 	}
@@ -345,12 +348,69 @@ func TestExtractFontZipRejectsOversizeArchiveTotal(t *testing.T) {
 		t.Fatal(closeErr)
 	}
 
-	err = ExtractFontZip(archivePath, filepath.Join(temp, "out"))
+	err = ExtractFontZip(t.Context(), archivePath, filepath.Join(temp, "out"))
 	if err == nil {
 		t.Fatal("ExtractFontZip() error = nil, want total-size error")
 	}
 	if !strings.Contains(err.Error(), "total uncompressed size") {
 		t.Fatalf("ExtractFontZip() error = %v, want total-size error", err)
+	}
+}
+
+func TestExtractFontZipStopsWhenContextCancelled(t *testing.T) {
+	prev := maxFontFileBytes
+	maxFontFileBytes = 64 << 20
+	t.Cleanup(func() { maxFontFileBytes = prev })
+
+	temp := t.TempDir()
+	archivePath := filepath.Join(temp, "font.zip")
+	file, err := os.Create(archivePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	writer := zip.NewWriter(file)
+	entry, err := writer.Create("Slow.ttf")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, writeErr := entry.Write(bytes.Repeat([]byte("A"), 32<<20)); writeErr != nil {
+		t.Fatal(writeErr)
+	}
+	if closeErr := writer.Close(); closeErr != nil {
+		t.Fatal(closeErr)
+	}
+	if closeErr := file.Close(); closeErr != nil {
+		t.Fatal(closeErr)
+	}
+
+	destination := filepath.Join(temp, "out")
+	ctx, cancel := context.WithCancel(t.Context())
+	defer cancel()
+
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		fontPath := filepath.Join(destination, "Slow.ttf")
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			default:
+			}
+
+			if _, statErr := os.Stat(fontPath); statErr == nil {
+				cancel()
+				return
+			}
+			time.Sleep(time.Millisecond)
+		}
+	}()
+
+	err = ExtractFontZip(ctx, archivePath, destination)
+	<-done
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("ExtractFontZip() error = %v, want context.Canceled", err)
 	}
 }
 
@@ -541,29 +601,109 @@ func TestInstallReportsDownloadErrors(t *testing.T) {
 }
 
 func TestReplaceDirectoryRollsBackOnFailure(t *testing.T) {
-	root := t.TempDir()
-	destination := filepath.Join(root, "Hack")
-	if err := os.MkdirAll(destination, 0o750); err != nil {
-		t.Fatal(err)
-	}
-	keep := filepath.Join(destination, "keep.ttf")
-	if err := os.WriteFile(keep, []byte("original"), 0o644); err != nil {
-		t.Fatal(err)
+	tests := []struct {
+		name              string
+		overrideRename    func(source, destination, backup string) func(string, string) error
+		wantErrSubstrings []string
+		wantDestination   bool
+		wantBackup        bool
+		wantOriginalKept  bool
+	}{
+		{
+			name:              "rollback succeeds",
+			wantErrSubstrings: []string{"move extracted fonts"},
+			wantDestination:   true,
+			wantBackup:        false,
+			wantOriginalKept:  true,
+		},
+		{
+			name: "rollback failure is surfaced",
+			overrideRename: func(source, destination, backup string) func(string, string) error {
+				return func(oldPath, newPath string) error {
+					switch {
+					case oldPath == destination && newPath == backup:
+						return os.Rename(oldPath, newPath)
+					case oldPath == source && newPath == destination:
+						return errForwardRename
+					case oldPath == backup && newPath == destination:
+						return errRestoreRename
+					default:
+						return os.Rename(oldPath, newPath)
+					}
+				}
+			},
+			wantErrSubstrings: []string{
+				"move extracted fonts",
+				errForwardRename.Error(),
+				"restore previous fonts",
+				errRestoreRename.Error(),
+				".old",
+			},
+			wantDestination:  false,
+			wantBackup:       true,
+			wantOriginalKept: false,
+		},
 	}
 
-	// A source that does not exist forces the forward rename to fail after the
-	// existing destination has been moved aside, exercising the rollback path.
-	missingSource := filepath.Join(root, "does-not-exist")
-	if err := replaceDirectory(missingSource, destination); err == nil {
-		t.Fatal("replaceDirectory() error = nil, want rename failure")
-	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			root := t.TempDir()
+			destination := filepath.Join(root, "Hack")
+			if err := os.MkdirAll(destination, 0o750); err != nil {
+				t.Fatal(err)
+			}
+			keep := filepath.Join(destination, "keep.ttf")
+			if err := os.WriteFile(keep, []byte("original"), 0o644); err != nil {
+				t.Fatal(err)
+			}
 
-	data, err := os.ReadFile(keep)
-	if err != nil || string(data) != "original" {
-		t.Fatalf("rollback failed: original content = %q, err = %v", data, err)
-	}
-	if _, err := os.Stat(destination + ".old"); !os.IsNotExist(err) {
-		t.Fatalf("backup should be restored (no .old left), stat err = %v", err)
+			source := filepath.Join(root, "does-not-exist")
+			if tt.overrideRename != nil {
+				previous := renameDirectoryFn
+				renameDirectoryFn = tt.overrideRename(source, destination, destination+".old")
+				t.Cleanup(func() { renameDirectoryFn = previous })
+				if err := os.MkdirAll(source, 0o750); err != nil {
+					t.Fatal(err)
+				}
+			}
+
+			err := replaceDirectory(source, destination)
+			if err == nil {
+				t.Fatal("replaceDirectory() error = nil, want rename failure")
+			}
+			for _, want := range tt.wantErrSubstrings {
+				if !strings.Contains(err.Error(), want) {
+					t.Fatalf("replaceDirectory() error = %v, want substring %q", err, want)
+				}
+			}
+
+			_, destinationErr := os.Stat(destination)
+			if tt.wantDestination && destinationErr != nil {
+				t.Fatalf("destination missing, stat err = %v", destinationErr)
+			}
+			if !tt.wantDestination && !os.IsNotExist(destinationErr) {
+				t.Fatalf("destination stat err = %v, want not-exist", destinationErr)
+			}
+
+			_, backupErr := os.Stat(destination + ".old")
+			if tt.wantBackup && backupErr != nil {
+				t.Fatalf("backup missing, stat err = %v", backupErr)
+			}
+			if !tt.wantBackup && !os.IsNotExist(backupErr) {
+				t.Fatalf("backup stat err = %v, want not-exist", backupErr)
+			}
+
+			data, readErr := os.ReadFile(keep)
+			if tt.wantOriginalKept {
+				if readErr != nil || string(data) != "original" {
+					t.Fatalf("original content = %q, err = %v; want preserved", data, readErr)
+				}
+				return
+			}
+			if !os.IsNotExist(readErr) {
+				t.Fatalf("readFile err = %v, want destination removal after failed restore", readErr)
+			}
+		})
 	}
 }
 
@@ -572,6 +712,8 @@ type errReader struct{}
 func (errReader) Read([]byte) (int, error) { return 0, errTransport }
 
 var errTransport = errorString("simulated network failure")
+var errForwardRename = errorString("simulated forward rename failure")
+var errRestoreRename = errorString("simulated restore rename failure")
 
 type errorString string
 
@@ -678,6 +820,51 @@ func TestFetchChecksumsReturnsNilOnNon2xx(t *testing.T) {
 	}
 }
 
+func TestInstallContinuesWhenChecksumFetchTimesOut(t *testing.T) {
+	prev := checksumFetchTimeout
+	checksumFetchTimeout = 20 * time.Millisecond
+	t.Cleanup(func() { checksumFetchTimeout = prev })
+
+	zipBytes := fontZip(t)
+	client := &http.Client{
+		Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+			if strings.HasSuffix(req.URL.Path, "SHA-256.txt") {
+				<-req.Context().Done()
+				return nil, req.Context().Err()
+			}
+			return &http.Response{
+				StatusCode: http.StatusOK,
+				Status:     "200 OK",
+				Body:       io.NopCloser(bytes.NewReader(zipBytes)),
+			}, nil
+		}),
+	}
+
+	destination := filepath.Join(t.TempDir(), "fonts")
+	var stderr strings.Builder
+	start := time.Now()
+	err := Install(t.Context(), Options{
+		Release:     "latest",
+		Destination: destination,
+		Families:    []string{"Hack"},
+		HTTPClient:  client,
+		Stderr:      &stderr,
+	})
+	elapsed := time.Since(start)
+	if err != nil {
+		t.Fatalf("Install() error = %v, want warn-and-proceed on checksum timeout", err)
+	}
+	if elapsed > 500*time.Millisecond {
+		t.Fatalf("Install() took %v, want bounded checksum timeout", elapsed)
+	}
+	if !strings.Contains(stderr.String(), "Checksum manifest unavailable") {
+		t.Fatalf("stderr = %q, want checksum warning", stderr.String())
+	}
+	if _, statErr := os.Stat(filepath.Join(destination, "Hack")); statErr != nil {
+		t.Fatalf("family not installed after checksum timeout: %v", statErr)
+	}
+}
+
 func TestFetchChecksumsReturnsNilOnTransportError(t *testing.T) {
 	client := &http.Client{
 		Transport: roundTripFunc(func(*http.Request) (*http.Response, error) {
@@ -708,6 +895,85 @@ func TestFetchChecksumsIgnoresNonZipLines(t *testing.T) {
 	got := fetchChecksums(t.Context(), client, "v3.4.0", &strings.Builder{})
 	if len(got) != 1 || got["Hack"] != "bbb222" {
 		t.Fatalf("fetchChecksums() = %v, want only Hack=bbb222", got)
+	}
+}
+
+func TestInstallRefreshesFontCacheAfterPartialSuccess(t *testing.T) {
+	zipBytes := fontZip(t)
+	destination := filepath.Join(t.TempDir(), "fonts")
+	hackInstalled := make(chan struct{})
+	client := &http.Client{
+		Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+			switch {
+			case strings.HasSuffix(req.URL.Path, "SHA-256.txt"):
+				return &http.Response{
+					StatusCode: http.StatusNotFound,
+					Status:     "404 Not Found",
+					Body:       io.NopCloser(strings.NewReader("")),
+				}, nil
+			case strings.Contains(req.URL.Path, "Inter.zip"):
+				<-hackInstalled
+				return &http.Response{
+					StatusCode: http.StatusNotFound,
+					Status:     "404 Not Found",
+					Body:       io.NopCloser(bytes.NewReader(nil)),
+				}, nil
+			default:
+				return &http.Response{
+					StatusCode: http.StatusOK,
+					Status:     "200 OK",
+					Body:       io.NopCloser(bytes.NewReader(zipBytes)),
+				}, nil
+			}
+		}),
+	}
+
+	var refreshCalls int
+	var refreshedRoot string
+	previousRefresh := refreshFontCacheFn
+	refreshFontCacheFn = func(_ context.Context, root string, _, _ io.Writer) error {
+		refreshCalls++
+		refreshedRoot = root
+		return nil
+	}
+	t.Cleanup(func() { refreshFontCacheFn = previousRefresh })
+
+	previousRename := renameDirectoryFn
+	renameDirectoryFn = func(oldPath, newPath string) error {
+		err := os.Rename(oldPath, newPath)
+		if err == nil && newPath == filepath.Join(destination, "Hack") {
+			select {
+			case <-hackInstalled:
+			default:
+				close(hackInstalled)
+			}
+		}
+		return err
+	}
+	t.Cleanup(func() { renameDirectoryFn = previousRename })
+
+	err := Install(t.Context(), Options{
+		Release:          "latest",
+		Destination:      destination,
+		Families:         []string{"Hack", "Inter"},
+		RefreshFontCache: true,
+		HTTPClient:       client,
+		Stderr:           io.Discard,
+	})
+	if err == nil {
+		t.Fatal("Install() error = nil, want partial failure")
+	}
+	if !strings.Contains(err.Error(), "Inter") {
+		t.Fatalf("Install() error = %v, want failing family name", err)
+	}
+	if refreshCalls != 1 {
+		t.Fatalf("refresh calls = %d, want 1 after partial success", refreshCalls)
+	}
+	if refreshedRoot != destination {
+		t.Fatalf("refreshed root = %q, want %q", refreshedRoot, destination)
+	}
+	if _, statErr := os.Stat(filepath.Join(destination, "Hack")); statErr != nil {
+		t.Fatalf("successful family not installed: %v", statErr)
 	}
 }
 

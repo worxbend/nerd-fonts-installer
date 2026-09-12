@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"errors"
-	"flag"
 	"fmt"
 	"io"
 	"os"
@@ -30,36 +29,31 @@ const (
 	configEnvVar = "NERD_FONTS_INSTALLER_CONFIG"
 )
 
-// configEnvVar names an environment variable holding a config path. It is
-// honored like --config (highest priority after the explicit flag), which suits
-// dotfiles, CI, and containers.
-// effectiveConfigPath resolves which config path to load and whether it is an
-// explicit selection: the --config flag wins, then configEnvVar, otherwise the
-// caller falls back to discovery.
-func effectiveConfigPath(configPath string, explicit bool) (string, bool) {
-	if explicit {
-		return configPath, true
-	}
-	if env := strings.TrimSpace(os.Getenv(configEnvVar)); env != "" {
-		return env, true
-	}
-	return configPath, false
-}
-
 func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
 
-	os.Exit(run(ctx, os.Args[1:], os.Stdin, os.Stdout, os.Stderr, dependencies{}))
+	os.Exit(run(ctx, os.Args[1:], ioStreams{
+		In:  os.Stdin,
+		Out: os.Stdout,
+		Err: os.Stderr,
+	}, dependencies{}))
+}
+
+type ioStreams struct {
+	In  io.Reader
+	Out io.Writer
+	Err io.Writer
 }
 
 type dependencies struct {
-	loadConfig     func(string) (config.Config, error)
-	discoverConfig func() (config.Source, bool, error)
-	listReleases   func(context.Context) ([]nerdfonts.Release, error)
-	runTUI         func(context.Context, []nerdfonts.Release, tui.Options) (tui.Result, error)
-	installFonts   func(context.Context, fonts.Options) error
-	isTerminal     func(io.Reader, io.Writer) bool
+	loadConfig         func(string) (config.Config, error)
+	discoverConfig     func() (config.Source, bool, error)
+	defaultConfigPaths func() ([]string, error)
+	listReleases       func(context.Context) ([]nerdfonts.Release, error)
+	runTUI             func(context.Context, []nerdfonts.Release, tui.Options) (tui.Result, error)
+	installFonts       func(context.Context, fonts.Options) error
+	isTerminal         func(ioStreams) bool
 }
 
 func (d dependencies) withDefaults() dependencies {
@@ -68,6 +62,9 @@ func (d dependencies) withDefaults() dependencies {
 	}
 	if d.discoverConfig == nil {
 		d.discoverConfig = config.Discover
+	}
+	if d.defaultConfigPaths == nil {
+		d.defaultConfigPaths = config.DefaultPaths
 	}
 	if d.listReleases == nil {
 		d.listReleases = nerdfonts.Client{}.Releases
@@ -84,131 +81,63 @@ func (d dependencies) withDefaults() dependencies {
 	return d
 }
 
-func run(
-	ctx context.Context,
-	args []string,
-	stdin io.Reader,
-	stdout io.Writer,
-	stderr io.Writer,
-	deps dependencies,
-) int {
-	deps = deps.withDefaults()
-
-	flags := flag.NewFlagSet(commandName, flag.ContinueOnError)
-	flags.SetOutput(stderr)
-	configPath := flags.String("config", "", "config file; when omitted, discover an app-named config in CWD or the user config directory")
-	dryRun := flags.Bool("dry-run", false, "print planned downloads without installing fonts")
-	showFontNames := flags.Bool("font-names", false, "print YAML-ready Nerd Font family names and exit")
-	interactive := flags.Bool("interactive", false, "start the terminal picker when no config file is found")
-	iconMode := flags.String("icons", string(tui.IconAuto), "interactive icon mode: auto, nerd, unicode, or ascii")
-	showVersion := flags.Bool("version", false, "print version information and exit")
-	if err := flags.Parse(args); err != nil {
-		return 2
+func effectiveConfigPath(configPath string, explicit bool) (string, bool) {
+	if explicit {
+		return configPath, true
 	}
-	icons, err := parseIconMode(*iconMode)
-	if err != nil {
-		_, _ = fmt.Fprintf(stderr, "%v\n", err)
-		return 2
+	if env := strings.TrimSpace(os.Getenv(configEnvVar)); env != "" {
+		return env, true
 	}
-
-	if *showVersion {
-		_, _ = fmt.Fprintf(stdout, "%s %s (%s, %s)\n", commandName, version, commit, date)
-		return 0
-	}
-
-	explicitConfig := false
-	flags.Visit(func(f *flag.Flag) {
-		if f.Name == "config" {
-			explicitConfig = true
-		}
-	})
-
-	if *showFontNames {
-		if printErr := printFontNames(ctx, *configPath, explicitConfig, stdout, deps); printErr != nil {
-			_, _ = fmt.Fprintf(stderr, "%v\n", printErr)
-			return exitCodeFor(printErr)
-		}
-		return 0
-	}
-
-	cfg, err := resolveConfig(
-		ctx,
-		*configPath,
-		explicitConfig,
-		*interactive,
-		deps.isTerminal(stdin, stdout),
-		icons,
-		stderr,
-		deps,
-	)
-	if err != nil {
-		if errors.Is(err, errCancelled) {
-			return 0
-		}
-		_, _ = fmt.Fprintf(stderr, "%v\n", err)
-		return exitCodeFor(err)
-	}
-
-	if err := install(ctx, cfg, *dryRun, stdout, stderr, deps.installFonts); err != nil {
-		_, _ = fmt.Fprintf(stderr, "install fonts: %v\n", err)
-		return 1
-	}
-	return 0
+	return configPath, false
 }
 
-// exitCodeFor maps an error to a process exit code: 2 for user-input problems
-// the caller can correct (missing config, unknown or absent release), 1 for
-// runtime failures (network, filesystem, install).
+func effectiveConfigSource(explicit bool) string {
+	if explicit {
+		return "flag"
+	}
+	if env := strings.TrimSpace(os.Getenv(configEnvVar)); env != "" {
+		return "env"
+	}
+	return ""
+}
+
+func defaultConfig() config.Config {
+	var cfg config.Config
+	cfg.ApplyDefaults()
+	return cfg
+}
+
+type configResolutionError struct {
+	path string
+	err  error
+}
+
+func (e configResolutionError) Error() string {
+	return fmt.Sprintf("load config %s: %v", e.path, e.err)
+}
+
+func (e configResolutionError) Unwrap() error {
+	return e.err
+}
+
+func explicitConfigError(path string, err error) error {
+	return configResolutionError{path: path, err: err}
+}
+
 func exitCodeFor(err error) int {
 	var notFound nerdfonts.ReleaseNotFoundError
+	var configErr configResolutionError
 	switch {
 	case errors.As(err, &notFound),
 		errors.Is(err, nerdfonts.ErrNoReleases),
-		errors.Is(err, errNoConfig):
+		errors.Is(err, errNoConfig),
+		errors.As(err, &configErr):
 		return 2
 	default:
 		return 1
 	}
 }
 
-func printFontNames(
-	ctx context.Context,
-	configPath string,
-	explicitConfig bool,
-	stdout io.Writer,
-	deps dependencies,
-) error {
-	release := nerdfonts.Latest
-	if path, explicit := effectiveConfigPath(configPath, explicitConfig); explicit {
-		cfg, err := deps.loadConfig(path)
-		if err != nil {
-			return fmt.Errorf("load config %s: %w", path, err)
-		}
-		release = cfg.Release
-	} else if source, found, err := deps.discoverConfig(); err != nil {
-		return err
-	} else if found {
-		release = source.Config.Release
-	}
-
-	releases, err := deps.listReleases(ctx)
-	if err != nil {
-		return err
-	}
-	selected, err := selectRelease(releases, release)
-	if err != nil {
-		return err
-	}
-
-	_, _ = fmt.Fprintf(stdout, "# %s\nfamilies:\n", selected.TagName)
-	for _, family := range selected.Families {
-		_, _ = fmt.Fprintf(stdout, "  - %s\n", family)
-	}
-	return nil
-}
-
-// noConfigError builds the "no config found" message from the live discovery
-// paths so it stays in sync with DefaultPaths and is correct per-OS.
 func noConfigError() error {
 	hint := fmt.Sprintf("pass --config or set %s", configEnvVar)
 	if paths, err := config.DefaultPaths(); err == nil && len(paths) > 0 {
@@ -232,60 +161,6 @@ func selectRelease(releases []nerdfonts.Release, release string) (nerdfonts.Rele
 	return nerdfonts.Release{}, nerdfonts.ReleaseNotFoundError{Tag: release}
 }
 
-func resolveConfig(
-	ctx context.Context,
-	configPath string,
-	explicitConfig bool,
-	interactive bool,
-	terminal bool,
-	icons tui.IconMode,
-	stderr io.Writer,
-	deps dependencies,
-) (config.Config, error) {
-	if path, explicit := effectiveConfigPath(configPath, explicitConfig); explicit {
-		cfg, err := deps.loadConfig(path)
-		if err != nil {
-			return config.Config{}, fmt.Errorf("load config %s: %w", path, err)
-		}
-		return cfg, nil
-	}
-
-	source, found, err := deps.discoverConfig()
-	if err != nil {
-		return config.Config{}, err
-	}
-	if found {
-		_, _ = fmt.Fprintf(stderr, "Using config %s\n", source.Path)
-		return source.Config, nil
-	}
-
-	if !interactive {
-		return config.Config{}, noConfigError()
-	}
-	if !terminal {
-		return config.Config{}, fmt.Errorf("%w; --interactive requires stdin and stdout terminals", errNoConfig)
-	}
-
-	_, _ = fmt.Fprintln(stderr, "No config found. Starting interactive mode...")
-	releases, err := tui.LoadReleases(ctx, deps.listReleases, stderr)
-	if err != nil {
-		return config.Config{}, err
-	}
-
-	result, err := deps.runTUI(ctx, releases, tui.Options{
-		Destination:      "~/.local/share/fonts/NerdFonts",
-		RefreshFontCache: true,
-		Icons:            icons,
-	})
-	if err != nil {
-		return config.Config{}, err
-	}
-	if result.Cancelled {
-		return config.Config{}, errCancelled
-	}
-	return result.Config, nil
-}
-
 func parseIconMode(raw string) (tui.IconMode, error) {
 	mode := tui.IconMode(strings.ToLower(strings.TrimSpace(raw)))
 	switch mode {
@@ -299,25 +174,23 @@ func parseIconMode(raw string) (tui.IconMode, error) {
 func install(
 	ctx context.Context,
 	cfg config.Config,
-	dryRun bool,
-	stdout io.Writer,
-	stderr io.Writer,
-	installFonts func(context.Context, fonts.Options) error,
+	opts installOptions,
+	deps dependencies,
 ) error {
-	return installFonts(ctx, fonts.Options{
+	return deps.installFonts(ctx, fonts.Options{
 		Release:          cfg.Release,
 		Destination:      cfg.Destination,
 		Families:         cfg.Families,
 		RefreshFontCache: cfg.RefreshFontCache,
-		DryRun:           dryRun,
-		Stdout:           stdout,
-		Stderr:           stderr,
+		DryRun:           opts.dryRun,
+		Stdout:           opts.streams.Out,
+		Stderr:           opts.streams.Err,
 	})
 }
 
-func isTerminal(stdin io.Reader, stdout io.Writer) bool {
-	stdinFile, stdinOK := stdin.(*os.File)
-	stdoutFile, stdoutOK := stdout.(*os.File)
+func isTerminal(streams ioStreams) bool {
+	stdinFile, stdinOK := streams.In.(*os.File)
+	stdoutFile, stdoutOK := streams.Out.(*os.File)
 	if !stdinOK || !stdoutOK {
 		return false
 	}
