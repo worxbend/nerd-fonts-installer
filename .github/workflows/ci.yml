@@ -19,12 +19,12 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7.0.1
 
       - name: Set up Go
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@v7.0.0
         with:
-          go-version: "1.26.x"
+          go-version-file: go.mod
           cache: true
           cache-dependency-path: go.sum
 
@@ -47,7 +47,7 @@ jobs:
         run: go build -trimpath -o /tmp/nerd-fonts-installer ./cmd/nerd-fonts-installer
 
       - name: Lint GitHub workflows
-        run: go run github.com/rhysd/actionlint/cmd/actionlint@v1.7.12
+        run: make workflow-lint
 
   test:
     name: Test (${{ matrix.os }})
@@ -61,12 +61,12 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7.0.1
 
       - name: Set up Go
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@v7.0.0
         with:
-          go-version: "1.26.x"
+          go-version-file: go.mod
           cache: true
           cache-dependency-path: go.sum
 
@@ -79,12 +79,12 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7.0.1
 
       - name: Set up Go
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@v7.0.0
         with:
-          go-version: "1.26.x"
+          go-version-file: go.mod
           cache: true
           cache-dependency-path: go.sum
 
@@ -97,12 +97,12 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7.0.1
 
       - name: Set up Go
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@v7.0.0
         with:
-          go-version: "1.26.x"
+          go-version-file: go.mod
           cache: true
           cache-dependency-path: go.sum
 
@@ -110,7 +110,7 @@ jobs:
         run: go test -coverprofile=coverage.out ./...
 
       - name: Upload coverage profile
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: coverage
           path: coverage.out
@@ -122,19 +122,19 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7.0.1
 
       - name: Set up Go
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@v7.0.0
         with:
-          go-version: "1.26.x"
+          go-version-file: go.mod
           cache: true
           cache-dependency-path: go.sum
 
       - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@v9
+        uses: golangci/golangci-lint-action@v9.3.0
         with:
-          version: v2.12.2
+          version: v2.14.0
           args: --timeout=5m ./...
 
   vulnerability:
@@ -143,13 +143,14 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7.0.1
 
-      - name: Run govulncheck
-        uses: golang/govulncheck-action@v1
+      - name: Set up Go
+        uses: actions/setup-go@v7.0.0
         with:
-          repo-checkout: false
-          go-version-input: "1.26.x"
-          go-package: ./...
+          go-version-file: go.mod
           cache: true
           cache-dependency-path: go.sum
+
+      - name: Run govulncheck
+        run: make vuln

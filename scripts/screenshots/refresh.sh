@@ -17,7 +17,7 @@ export NFI_SHOT_WORK="$work"
 for tool in python3 bwrap go; do
 	command -v "$tool" >/dev/null || { echo "missing required tool: $tool" >&2; exit 1; }
 done
-python3 -c 'import pyte' 2>/dev/null || { echo "missing python package: pyte (pip install pyte)" >&2; exit 1; }
+python3 -c 'import pyte' 2>/dev/null || { echo "missing Python dependencies: python3 -m pip install -r $here/requirements.txt" >&2; exit 1; }
 
 rm -rf "$work"
 mkdir -p "$work/home-bare" "$work/home-configured/.config/nerd-fonts-installer" "$out"

@@ -34,17 +34,17 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 0
           persist-credentials: false
 
       - name: Build snap
         id: build
-        uses: snapcore/action-build@v1
+        uses: snapcore/action-build@v1.3.0
 
       - name: Upload snap artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: snap
           path: ${{ steps.build.outputs.snap }}
@@ -72,7 +72,7 @@ jobs:
 
       - name: Publish snap
         if: github.event_name != 'pull_request'
-        uses: snapcore/action-publish@v1
+        uses: snapcore/action-publish@v1.2.0
         env:
           SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
         with:

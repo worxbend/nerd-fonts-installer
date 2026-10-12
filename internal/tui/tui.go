@@ -8,10 +8,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/list"
-	"github.com/charmbracelet/bubbles/spinner"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/list"
+	"charm.land/bubbles/v2/spinner"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 
 	"github.com/worxbend/nerd-fonts-installer/internal/config"
 	"github.com/worxbend/nerd-fonts-installer/internal/nerdfonts"
@@ -37,8 +37,8 @@ const (
 	stepDone
 )
 
-// Neon / synthwave palette. Colors are true-color hex; lipgloss + termenv
-// downsample them to whatever the terminal actually supports, so they stay
+// Neon / synthwave palette. Colors are true-color hex; Bubble Tea
+// downsamples them to whatever the terminal actually supports, so they stay
 // safe on 256-color and 16-color terminals too.
 const (
 	cPink    = "#FF5FAF"
@@ -349,9 +349,9 @@ func (m loadingModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 }
 
-func (m loadingModel) View() string {
+func (m loadingModel) View() tea.View {
 	brand := gradientText("✦ nerd-fonts-installer", brandRamp)
-	return fmt.Sprintf("\n  %s\n  %s %s\n", brand, spinnerStyle.Render(m.spinner.View()), accentStyle.Render(m.message))
+	return tea.NewView(fmt.Sprintf("\n  %s\n  %s %s\n", brand, spinnerStyle.Render(m.spinner.View()), accentStyle.Render(m.message)))
 }
 
 func Run(ctx context.Context, releases []nerdfonts.Release, opts Options) (Result, error) {
@@ -367,7 +367,6 @@ func Run(ctx context.Context, releases []nerdfonts.Release, opts Options) (Resul
 	m := newModel(releases, destination, opts.RefreshFontCache, opts.Icons)
 	programOptions := []tea.ProgramOption{
 		tea.WithContext(ctx),
-		tea.WithAltScreen(),
 	}
 	if opts.Output != nil {
 		programOptions = append(programOptions, tea.WithOutput(opts.Output))
@@ -472,7 +471,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.familyList = setListSize(m.familyList, listWidth, listHeight)
 		}
 		return m, nil
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		return m.updateKey(msg)
 	}
 
@@ -486,7 +485,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m model) updateKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m model) updateKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch msg.String() {
 	case "ctrl+c", "q":
 		m.cancelled = true
@@ -510,7 +509,7 @@ func (m model) updateKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	}
 }
 
-func (m model) updateReleaseKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m model) updateReleaseKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	if msg.String() != "enter" {
 		var cmd tea.Cmd
 		m.releaseList, cmd = m.releaseList.Update(msg)
@@ -535,12 +534,12 @@ func (m model) updateReleaseKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, tea.Quit
 }
 
-func (m model) updateFamilyKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m model) updateFamilyKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch msg.String() {
 	case "b":
 		m.step = stepRelease
 		return m, nil
-	case " ":
+	case "space":
 		selected, ok := m.familyList.SelectedItem().(item)
 		if !ok {
 			return m, nil
@@ -698,7 +697,13 @@ func (m model) selectedCount() int {
 	return count
 }
 
-func (m model) View() string {
+func (m model) View() tea.View {
+	v := tea.NewView(m.viewContent())
+	v.AltScreen = true
+	return v
+}
+
+func (m model) viewContent() string {
 	if m.err != nil {
 		return errorStyle.Render(m.err.Error())
 	}
@@ -767,7 +772,7 @@ func (m model) screenBody(listView, preview string) string {
 
 func (m model) banner(stepLabel, detail string) string {
 	boxWidth := m.bodyWidth() - 6
-	textWidth := boxWidth - 4 // account for the banner's horizontal padding
+	textWidth := boxWidth - bannerStyle.GetHorizontalFrameSize()
 
 	wordmark := gradientText(m.logo()+"  nerd-fonts-installer", brandRamp)
 	header := wordmark
@@ -928,10 +933,7 @@ func (m model) listSize() (int, int) {
 	if height < minListHeight {
 		height = minListHeight
 	}
-	if m.wideLayout() {
-		return m.listPanelWidth() - 6, height
-	}
-	return m.bodyWidth() - 8, height
+	return m.listPanelWidth() - activePanelStyle.GetHorizontalFrameSize(), height
 }
 
 func (m model) wideLayout() bool {

@@ -1,8 +1,7 @@
 GO ?= go
-GOLANGCI_LINT_VERSION ?= v2.12.2
+GOLANGCI_LINT_VERSION ?= v2.14.0
 ACTIONLINT_VERSION ?= v1.7.12
-GOVULNCHECK_VERSION ?= latest
-GOVULNCHECK_TOOLCHAIN ?= go1.26.5+auto
+GOVULNCHECK_VERSION ?= v1.9.0
 
 PKGS := ./...
 GO_DIRS := cmd internal
@@ -49,7 +48,7 @@ build:
 	$(GO) build -trimpath -o bin/nerd-fonts-installer ./cmd/nerd-fonts-installer
 
 vuln:
-	GOTOOLCHAIN=$(GOVULNCHECK_TOOLCHAIN) $(GO) run golang.org/x/vuln/cmd/govulncheck@$(GOVULNCHECK_VERSION) $(PKGS)
+	$(GO) run golang.org/x/vuln/cmd/govulncheck@$(GOVULNCHECK_VERSION) $(PKGS)
 
 workflow-lint:
 	$(GO) run github.com/rhysd/actionlint/cmd/actionlint@$(ACTIONLINT_VERSION)

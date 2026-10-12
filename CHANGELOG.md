@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.0.8 - 2026-10-13
+
 ### Added
 
 - A GitHub Pages microsite in `docs/`, deployed by the `Pages` workflow, with
@@ -17,6 +19,8 @@
 
 ### Fixed
 
+- Preserved terminal-height budgeting with Lip Gloss v2's border-inclusive
+  widths and kept installer progress colors adapted to each output stream.
 - The interactive picker rendered one row taller than the terminal, so Bubble
   Tea truncated the top of the view and the banner's top border never appeared.
   The layout now fits at every terminal size: the side panel is dropped when it
@@ -24,6 +28,14 @@
 
 ### Changed
 
+- Updated the build toolchain to Go 1.27.2, the Charm terminal UI libraries to
+  v2, and all direct and required indirect Go modules to current stable releases.
+- Switched YAML parsing to the YAML organization's maintained v3 module,
+  retaining strict configuration decoding.
+- Updated GitHub Actions and golangci-lint to v2.14.0; pinned govulncheck to
+  v1.9.0 and aligned local and CI checks with the module's Go version.
+- Added weekly Dependabot checks for Go modules, GitHub Actions, and the
+  screenshot harness's pinned Python dependency.
 - Rewrote the README around the new screenshots, with collapsible sections for
   the long-form material that now lives in the wiki.
 - Bumped the `govulncheck` toolchain pin to `go1.26.5`, which carries the fix for

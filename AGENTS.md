@@ -16,7 +16,7 @@ Applies to Claude Code, Codex, and any other agent working in this repository.
 
 ## How to work here
 
-- Language/build: Go 1.26. Run `make verify` (vet + golangci-lint v2.12.2 +
+- Language/build: Go 1.27.2. Run `make verify` (vet + golangci-lint v2.14.0 +
   tests) before declaring done. `golangci-lint` is a required check for every
   code change; use `make lint` for a focused lint pass and `make verify` for
   the full gate. **Tests must pass under `go test -race ./...`** — the install

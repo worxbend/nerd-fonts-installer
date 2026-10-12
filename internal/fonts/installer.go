@@ -20,7 +20,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/lipgloss/v2"
+	"github.com/charmbracelet/colorprofile"
 	"github.com/worxbend/nerd-fonts-installer/internal/fontname"
 	"github.com/worxbend/nerd-fonts-installer/internal/nerdfonts"
 	"golang.org/x/sync/errgroup"
@@ -79,6 +80,10 @@ func Install(ctx context.Context, opts Options) error {
 	if opts.Stderr == nil {
 		opts.Stderr = io.Discard
 	}
+	// Lip Gloss v2 renders full ANSI; adapt colors to each output before the
+	// concurrent install workers serialize their writes through syncWriter.
+	opts.Stdout = colorprofile.NewWriter(opts.Stdout, os.Environ())
+	opts.Stderr = colorprofile.NewWriter(opts.Stderr, os.Environ())
 	if opts.HTTPClient == nil {
 		// Per-download timeouts are applied via context, so leave the client
 		// timeout unset. Raise the per-host connection caps from the default 2

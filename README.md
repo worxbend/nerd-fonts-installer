@@ -12,7 +12,7 @@
 [![CI](https://img.shields.io/github/actions/workflow/status/worxbend/nerd-fonts-installer/ci.yml?branch=main&label=CI&style=for-the-badge&color=5BF0B8)](https://github.com/worxbend/nerd-fonts-installer/actions/workflows/ci.yml)
 [![Snap Store](https://img.shields.io/badge/snap-install-FF5FAF?logo=snapcraft&logoColor=white&style=for-the-badge)](https://snapcraft.io/nerd-fonts-installer)
 [![License](https://img.shields.io/badge/license-MIT-5BA8FF?style=for-the-badge)](LICENSE)
-[![Go](https://img.shields.io/badge/Go-1.26+-46E5E0?logo=go&logoColor=white&style=for-the-badge)](https://go.dev)
+[![Go](https://img.shields.io/badge/Go-1.27.2+-46E5E0?logo=go&logoColor=white&style=for-the-badge)](https://go.dev)
 
 [**🌐 Website**](https://worxbend.github.io/nerd-fonts-installer/) &nbsp;•&nbsp;
 [**📖 Wiki**](https://github.com/worxbend/nerd-fonts-installer/wiki) &nbsp;•&nbsp;
@@ -122,7 +122,7 @@ nerd-fonts-installer version
 
 <br>
 
-Requires Go 1.26 or newer. Nothing else.
+Requires Go 1.27.2 or newer. Nothing else.
 
 ```bash
 git clone https://github.com/worxbend/nerd-fonts-installer

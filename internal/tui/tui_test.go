@@ -1,13 +1,16 @@
 package tui
 
 import (
+	"bytes"
+	"context"
+	"errors"
 	"strconv"
 	"strings"
 	"testing"
 
-	"github.com/charmbracelet/bubbles/list"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/list"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 
 	"github.com/worxbend/nerd-fonts-installer/internal/nerdfonts"
 )
@@ -21,7 +24,7 @@ func TestModelSelectsReleaseAndFamilies(t *testing.T) {
 		},
 	}, "/tmp/fonts", true, IconAuto)
 
-	next, _ := m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	next, _ := m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 	m = requireModel(t, next)
 	if m.step != stepFamilies {
 		t.Fatalf("step = %v, want stepFamilies", m.step)
@@ -30,19 +33,19 @@ func TestModelSelectsReleaseAndFamilies(t *testing.T) {
 		t.Fatalf("selectedRelease = %q", m.selectedRelease.TagName)
 	}
 
-	next, _ = m.Update(tea.KeyMsg{Type: tea.KeySpace})
+	next, _ = m.Update(tea.KeyPressMsg{Code: ' ', Text: " "})
 	m = requireModel(t, next)
 	if m.selectedCount() != 1 {
 		t.Fatalf("selectedCount() = %d, want 1", m.selectedCount())
 	}
 
-	next, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("a")})
+	next, _ = m.Update(tea.KeyPressMsg{Code: 'a', Text: "a"})
 	m = requireModel(t, next)
 	if m.selectedCount() != 2 {
 		t.Fatalf("selectedCount() = %d, want 2", m.selectedCount())
 	}
 
-	next, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("a")})
+	next, _ = m.Update(tea.KeyPressMsg{Code: 'a', Text: "a"})
 	m = requireModel(t, next)
 	if m.selectedCount() != 0 {
 		t.Fatalf("selectedCount() = %d, want 0", m.selectedCount())
@@ -140,16 +143,20 @@ func TestViewFitsTerminalHeight(t *testing.T) {
 		for _, step := range []step{stepRelease, stepFamilies} {
 			m := newModel(releases, "~/.local/share/fonts/NerdFonts", true, IconUnicode)
 			if step == stepFamilies {
-				next, _ := m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+				next, _ := m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 				m = requireModel(t, next)
 			}
 			next, _ := m.Update(size)
 			m = requireModel(t, next)
+			view := m.View()
+			if !view.AltScreen {
+				t.Fatal("picker view must use the alternate screen")
+			}
 
 			// safeHeight, not size.Height: terminals shorter than the floor
 			// cannot fit the frame at all and are deliberately laid out as if
 			// they were that tall.
-			if got, want := lipgloss.Height(m.View()), m.safeHeight(); got > want {
+			if got, want := lipgloss.Height(view.Content), m.safeHeight(); got > want {
 				t.Errorf("step %v at %dx%d: view height = %d, want <= %d",
 					step, size.Width, size.Height, got, want)
 			}
@@ -162,7 +169,7 @@ func newFamilyStepModel(t *testing.T) model {
 	m := newModel([]nerdfonts.Release{
 		{Name: "v3.4.0", TagName: "v3.4.0", Families: []string{"Hack", "JetBrainsMono"}},
 	}, "/tmp/fonts", true, IconAuto)
-	next, _ := m.Update(tea.KeyMsg{Type: tea.KeyEnter}) // advance release -> families
+	next, _ := m.Update(tea.KeyPressMsg{Code: tea.KeyEnter}) // advance release -> families
 	return requireModel(t, next)
 }
 
@@ -170,15 +177,15 @@ func TestUpdateFamilyKeyEnterRequiresSelection(t *testing.T) {
 	m := newFamilyStepModel(t)
 
 	// Enter with nothing selected is a no-op: must not advance to stepDone.
-	next, _ := m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	next, _ := m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 	m = requireModel(t, next)
 	if m.step != stepFamilies {
 		t.Fatalf("step = %v, want stepFamilies (enter with 0 selected is a no-op)", m.step)
 	}
 
-	next, _ = m.Update(tea.KeyMsg{Type: tea.KeySpace})
+	next, _ = m.Update(tea.KeyPressMsg{Code: ' ', Text: " "})
 	m = requireModel(t, next)
-	next, cmd := m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	next, cmd := m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 	m = requireModel(t, next)
 	if m.step != stepDone {
 		t.Fatalf("step = %v, want stepDone after selecting then enter", m.step)
@@ -191,7 +198,7 @@ func TestUpdateFamilyKeyEnterRequiresSelection(t *testing.T) {
 func TestUpdateFamilyKeyTogglesOff(t *testing.T) {
 	m := newFamilyStepModel(t)
 	for range 2 { // toggle the same family on, then off
-		next, _ := m.Update(tea.KeyMsg{Type: tea.KeySpace})
+		next, _ := m.Update(tea.KeyPressMsg{Code: ' ', Text: " "})
 		m = requireModel(t, next)
 	}
 	if m.selectedCount() != 0 {
@@ -202,10 +209,10 @@ func TestUpdateFamilyKeyTogglesOff(t *testing.T) {
 func TestUpdateFamilyKeyBackNavigation(t *testing.T) {
 	tests := []struct {
 		name string
-		msg  tea.KeyMsg
+		msg  tea.KeyPressMsg
 	}{
-		{name: "esc", msg: tea.KeyMsg{Type: tea.KeyEsc}},
-		{name: "b", msg: tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("b")}},
+		{name: "esc", msg: tea.KeyPressMsg{Code: tea.KeyEscape}},
+		{name: "b", msg: tea.KeyPressMsg{Code: 'b', Text: "b"}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -222,10 +229,10 @@ func TestUpdateFamilyKeyBackNavigation(t *testing.T) {
 func TestUpdateQuitKeysCancel(t *testing.T) {
 	tests := []struct {
 		name string
-		key  tea.KeyMsg
+		key  tea.KeyPressMsg
 	}{
-		{name: "q", key: tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("q")}},
-		{name: "ctrl-c", key: tea.KeyMsg{Type: tea.KeyCtrlC}},
+		{name: "q", key: tea.KeyPressMsg{Code: 'q', Text: "q"}},
+		{name: "ctrl-c", key: tea.KeyPressMsg{Code: 'c', Mod: tea.ModCtrl}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -241,6 +248,38 @@ func TestUpdateQuitKeysCancel(t *testing.T) {
 func TestRunRejectsEmptyReleases(t *testing.T) {
 	if _, err := Run(t.Context(), nil, Options{}); err == nil {
 		t.Fatal("Run() error = nil, want error for empty releases")
+	}
+}
+
+func TestLoadReleases(t *testing.T) {
+	loadErr := errors.New("release API unavailable")
+	tests := []struct {
+		name     string
+		releases []nerdfonts.Release
+		err      error
+	}{
+		{name: "success", releases: []nerdfonts.Release{{TagName: "v3.4.0"}}},
+		{name: "failure", err: loadErr},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var output bytes.Buffer
+			got, err := LoadReleases(t.Context(), func(ctx context.Context) ([]nerdfonts.Release, error) {
+				if ctx != t.Context() {
+					t.Error("loader did not receive the caller's context")
+				}
+				return tt.releases, tt.err
+			}, &output)
+			if !errors.Is(err, tt.err) {
+				t.Fatalf("LoadReleases() error = %v, want %v", err, tt.err)
+			}
+			if len(got) != len(tt.releases) {
+				t.Fatalf("LoadReleases() returned %d releases, want %d", len(got), len(tt.releases))
+			}
+			if len(got) > 0 && got[0].TagName != tt.releases[0].TagName {
+				t.Fatalf("release = %q, want %q", got[0].TagName, tt.releases[0].TagName)
+			}
+		})
 	}
 }
 

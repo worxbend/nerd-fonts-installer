@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	"github.com/worxbend/nerd-fonts-installer/internal/fontname"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v3"
 )
 
 const appName = "nerd-fonts-installer"

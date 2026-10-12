@@ -4,7 +4,9 @@ The terminal screenshots in [`assets/screenshots/`](../../assets/screenshots) ar
 generated from **real runs** of `nerd-fonts-installer`, not mocked up by hand.
 
 ```bash
-pip install pyte          # one-off
+python3 -m venv /tmp/nfi-screenshots-venv
+source /tmp/nfi-screenshots-venv/bin/activate
+python -m pip install -r scripts/screenshots/requirements.txt
 ./scripts/screenshots/refresh.sh
 ```
 

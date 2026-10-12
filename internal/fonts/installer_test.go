@@ -141,6 +141,8 @@ func TestExtractFontZipRejectsArchiveWithoutFonts(t *testing.T) {
 }
 
 func TestInstallDryRun(t *testing.T) {
+	t.Setenv("CLICOLOR_FORCE", "0")
+	t.Setenv("TTY_FORCE", "0")
 	var stdout bytes.Buffer
 	err := Install(t.Context(), Options{
 		Release:          "latest",
@@ -158,6 +160,9 @@ func TestInstallDryRun(t *testing.T) {
 	}
 	if !strings.Contains(stdout.String(), "Would refresh font cache") {
 		t.Fatalf("stdout = %q", stdout.String())
+	}
+	if strings.Contains(stdout.String(), "\x1b") {
+		t.Fatalf("piped output contains terminal escapes: %q", stdout.String())
 	}
 }
 
