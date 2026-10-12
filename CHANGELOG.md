@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## v1.0.9 - 2026-10-13
+
+### Fixed
+
+- Build the snap through the existing custom build script with the `nil`
+  plugin, allowing automatic Go patch-toolchain downloads when the stable Go
+  snap lags behind the version required by `go.mod`.
+
 ## v1.0.8 - 2026-10-13
 
 ### Added

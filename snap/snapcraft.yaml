@@ -20,7 +20,9 @@ apps:
 
 parts:
   nerd-fonts-installer:
-    plugin: go
+    # override-build owns compilation. The Go plugin's version probe rejects
+    # the download notice when go.mod requires a newer patch than the Go snap.
+    plugin: nil
     source: .
     build-snaps:
       - go/1.27/stable

@@ -74,9 +74,12 @@ dev-container setup.
   site, generated from real runs by `scripts/screenshots/` (pty capture with
   `pyte` → SVG render; `bwrap` shadows `$HOME` so a genuine install lands in a
   throwaway directory). Regenerate with `scripts/screenshots/refresh.sh`.
-- `snap/snapcraft.yaml` — Snapcraft packaging for the CLI. It builds the Go
-  command with the same ldflags contract and uses classic confinement so the
-  tool can write real user font directories and refresh fontconfig.
+- `snap/snapcraft.yaml` — Snapcraft packaging for the CLI. The `nil` plugin
+  delegates compilation to `override-build`, using the Go build snap and
+  automatic toolchain selection from `go.mod`. The Go plugin's version probe
+  cannot parse toolchain-download notices. The build preserves the ldflags
+  contract and uses classic confinement so the tool can write real user font
+  directories and refresh fontconfig.
 
 ## Invariants & design tenets (do not break)
 
